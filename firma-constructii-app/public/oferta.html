@@ -615,11 +615,62 @@
                 <i class="fas fa-save mr-2"></i>Spara offert
             </button>
             <button onclick="showPreview()"
+                class="bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 py-4 rounded-xl text-lg font-bold hover:from-purple-600 hover:to-purple-700 shadow-lg transition transform hover:scale-105">
+                <i class="fas fa-file-invoice mr-2"></i><span data-i18n="preview">Förhandsvisning</span>
+            </button>
+            <button onclick="showAcceptModal()"
                 class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-green-600 hover:to-green-700 shadow-lg transition transform hover:scale-105">
-                <i class="fas fa-arrow-right mr-2"></i>Förhandsvisning
+                <i class="fas fa-check-circle mr-2"></i><span data-i18n="acceptQuote">Acceptera offert</span>
             </button>
         </div>
     </div>
+    </div>
+
+    <!-- Accept Quote Modal -->
+    <div id="acceptModal" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-lg"><i class="fas fa-calendar-check mr-2"></i><span data-i18n="acceptTitle">Acceptera Offert & Planering</span></h3>
+                <button onclick="closeAcceptModal()" class="text-white hover:text-green-200"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto">
+                <!-- Data display -->
+                <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5 text-center shadow-inner">
+                    <p class="text-slate-500 text-sm mb-1" data-i18n="calcTimeMsg">Beräknad arbetstid</p>
+                    <div class="text-3xl font-black text-slate-800 font-mono tracking-tight" id="accTotalHours">0 <span class="text-lg text-slate-500 font-normal" data-i18n="hours">timmar</span></div>
+                    <div class="mt-2 inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold border border-blue-200">
+                        ~ <span id="accTotalDays">0</span> <span data-i18n="estDays">Uppskattade arbetsdagar</span>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1"><i class="fas fa-users mr-1 text-slate-400"></i><span data-i18n="workers">Antal arbetare</span></label>
+                        <input type="number" id="accWorkers" value="1" min="1" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all" onchange="calculateEndDate()">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1"><i class="fas fa-calendar-alt mr-1 text-slate-400"></i><span data-i18n="startDate">Startdatum</span></label>
+                        <input type="date" id="accStartDate" class="w-full border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all font-mono text-sm" onchange="calculateEndDate()">
+                    </div>
+                    
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+                        <label class="block text-xs font-bold text-green-700 mb-1"><i class="fas fa-flag-checkered mr-1"></i><span data-i18n="endDate">Beräknat slutdatum</span></label>
+                        <div class="font-bold text-lg text-green-800" id="accEndDateDisplay">-</div>
+                        <input type="hidden" id="accEndDate">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-4 border-t flex justify-end gap-3">
+                <button onclick="closeAcceptModal()" class="px-4 py-2 text-slate-600 font-medium hover:bg-slate-200 rounded-lg transition-colors"><span data-i18n="close">Stäng</span></button>
+                <button onclick="confirmAcceptQuote()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-6 py-2 rounded-lg font-bold shadow transition-transform hover:scale-105 flex items-center gap-2">
+                    <i class="fas fa-check"></i> <span data-i18n="confirmAccept">Bekräfta & Spara</span>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Preview Modal (outside no-print container) -->
@@ -675,6 +726,9 @@
                 preview: 'Förhandsvisning', previewTitle: 'Förhandsvisning Offert',
                 sendEmail: 'Skicka E-post', savePdf: 'Spara PDF', print: 'Skriv ut', close: 'Stäng',
                 nextStep: 'Nästa steg - Förhandsvisning', newQuote: 'Ny Offert',
+                acceptQuote: 'Acceptera offert', acceptTitle: 'Acceptera Offert & Planering',
+                calcTimeMsg: 'Beräknad arbetstid', hours: 'timmar', estDays: 'Uppskattade arbetsdagar',
+                workers: 'Antal arbetare', startDate: 'Startdatum', endDate: 'Beräknat slutdatum', confirmAccept: 'Bekräfta & Spara',
                 // Categories
                 cat_demolition: '2. Rivning', cat_preparation: '3. Förarbete', cat_waterproofing: '4. Tätskikt',
                 cat_ceiling: '5. Tak/Målning', cat_fixtures: '6. Montage', cat_plumbing: '7. VVS',
@@ -698,6 +752,9 @@
                 preview: 'Preview', previewTitle: 'Quote Preview',
                 sendEmail: 'Send Email', savePdf: 'Save PDF', print: 'Print', close: 'Close',
                 nextStep: 'Next Step - Preview', newQuote: 'New Quote',
+                acceptQuote: 'Accept Quote', acceptTitle: 'Accept Quote & Planning',
+                calcTimeMsg: 'Estimated work time', hours: 'hours', estDays: 'Estimated work days',
+                workers: 'Number of workers', startDate: 'Start date', endDate: 'Estimated end date', confirmAccept: 'Confirm & Save',
                 cat_demolition: '2. Demolition', cat_preparation: '3. Preparation', cat_waterproofing: '4. Waterproofing',
                 cat_ceiling: '5. Ceiling/Painting', cat_fixtures: '6. Fixtures', cat_plumbing: '7. Plumbing',
                 cat_electrical: '8. Electrical', cat_other: '9. Other'
@@ -720,6 +777,9 @@
                 preview: 'Previzualizare', previewTitle: 'Previzualizare Ofertă',
                 sendEmail: 'Trimite Email', savePdf: 'Salvează PDF', print: 'Printează', close: 'Închide',
                 nextStep: 'Pasul Următor - Previzualizare', newQuote: 'Ofertă Nouă',
+                acceptQuote: 'Acceptă Ofertă', acceptTitle: 'Acceptare Ofertă & Planificare',
+                calcTimeMsg: 'Timp estimat de lucru', hours: 'ore', estDays: 'Zile de lucru estimate',
+                workers: 'Număr de muncitori', startDate: 'Data de început', endDate: 'Data de final estimată', confirmAccept: 'Confirmă & Salvează',
                 cat_demolition: '2. Demolare', cat_preparation: '3. Pregătire', cat_waterproofing: '4. Hidroizolație',
                 cat_ceiling: '5. Tavan/Vopsit', cat_fixtures: '6. Montaj', cat_plumbing: '7. Instalații',
                 cat_electrical: '8. Electricitate', cat_other: '9. Altele'
@@ -1075,8 +1135,16 @@
 
             const preset = quotePresets[idx];
 
-            // Load preset's work items for UI structure only
-            const items = JSON.parse(JSON.stringify(preset.workItems));
+            // Load preset's work items for UI structure
+            // If the preset has no workItems (e.g. from an old save format or a glitch), fall back to current live items
+            let items = {};
+            if (preset.workItems && Object.keys(preset.workItems).length > 0) {
+                items = JSON.parse(JSON.stringify(preset.workItems));
+            } else {
+                console.warn("Preset has no workItems attached, falling back to current calculator items.");
+                loadCalculatorItems(); // Refresh live items to ensure settings.workItems is populated
+                items = JSON.parse(JSON.stringify(settings.workItems));
+            }
 
             // GRAFT MISSING DATA: Get time/formula/materialPrice from Calculator
             try {
@@ -1137,16 +1205,26 @@
             if (confirm(`Är du säker på att du vill radera mallen "${quotePresets[idx].name}"?`)) {
                 quotePresets.splice(idx, 1);
                 saveQuotePresetsToStorage();
+                
+                // UX IMPROVEMENT: Wipe safe before re-rendering
+                selected = { work: {}, materials: {} };
+                try {
+                    if (typeof wipeDimensions === 'function') {
+                        wipeDimensions();
+                    } else {
+                         // Fallback wipe if wipeDimensions is missing
+                         const dimInputs = ['dimLen', 'dimWid', 'dimHei', 'doorH', 'doorW', 'winH', 'winW', 'cornIn', 'cornOut', 'pipe1', 'pipe2', 'pipe3', 'drain', 'otherDeduct'];
+                         dimInputs.forEach(id => {
+                             const el = document.getElementById(id);
+                             if(el) el.value = '';
+                         });
+                    }
+                } catch (e) { console.error("Cleanup error in wipeDimensions:", e); }
+                
                 renderQuotePresets();
                 select.value = ''; // Reset selection
-
-                // UX IMPROVEMENT: Wipe safe
-                try {
-                    if (typeof wipeDimensions === 'function') wipeDimensions();
-                    selected = { work: {}, materials: {} };
-                    renderWorkSections();
-                    calcAll();
-                } catch (e) { console.error("Cleanup error", e); }
+                renderWorkSections();
+                calcAll();
 
                 alert('Mall raderad.');
             }
@@ -1338,7 +1416,6 @@
         function renderWorkRow(cat, item, index) {
             const key = `${cat}-${index}`;
             const isChecked = selected.work[key]?.checked;
-            // Use selected qty first, then formula-calculated importedQty, default to 0 (not 1!)
             const selectedQty = selected.work[key]?.qty;
             const qty = selectedQty !== undefined ? selectedQty : (item.importedQty !== undefined ? item.importedQty : 0);
             const labor = item.laborPrice || 0;
@@ -1352,9 +1429,9 @@
             if (item.isImport) {
                 const parts = [];
                 if (formula) parts.push(`Formel: ${formula}`);
-                if (time > 0) parts.push(`${time}h/enh`);
-                parts.push(`Arb: ${Math.round(labor)} kr`);
-                parts.push(`Mat: ${Math.round(mat)} kr`);
+                if (time > 0) parts.push(`${(time * qty).toFixed(1)}h Tot`);
+                parts.push(`Arb: ${Math.round(labor * qty)} kr`);
+                parts.push(`Mat: ${Math.round(mat * qty)} kr`);
                 detailLine = parts.join(' | ');
             }
 
@@ -1815,6 +1892,7 @@
                     wasteNote: 'Bortforsling av sopor, rivnings och spillmaterial ingår i offerten',
                     estimatedTime: 'Uppskattad kalendertid för genomförande av projektet från byggstart',
                     byAgreement: 'Enligt överenskommelse',
+                    estWorkDays: 'uppskattade arbetsdagar',
                     warrantyMaterial: 'Garanti material',
                     byManufacturer: 'enligt tillverkaren',
                     liabilityPeriod: 'Ansvarstid',
@@ -1849,6 +1927,7 @@
                     wasteNote: 'Removal of waste, demolition and waste material is included in the quote',
                     estimatedTime: 'Estimated calendar time for project completion from start of construction',
                     byAgreement: 'By agreement',
+                    estWorkDays: 'estimated work days',
                     warrantyMaterial: 'Material warranty',
                     byManufacturer: 'according to manufacturer',
                     liabilityPeriod: 'Liability period',
@@ -1883,6 +1962,7 @@
                     wasteNote: 'Evacuarea deșeurilor, materialelor de demolare și resturilor este inclusă în ofertă',
                     estimatedTime: 'Timp calendaristic estimat pentru finalizarea proiectului de la începerea construcției',
                     byAgreement: 'Conform înțelegerii',
+                    estWorkDays: 'zile de lucru estimate',
                     warrantyMaterial: 'Garanție materiale',
                     byManufacturer: 'conform producătorului',
                     liabilityPeriod: 'Perioadă răspundere',
@@ -1906,6 +1986,27 @@
 
             const companyName = settings.company?.name || 'Bluebygg Gislaved AB';
             const companyLogo = settings.company?.logo || '';
+
+            // Calculate estimated days dynamically for the preview
+            let previewTotalHours = 0;
+            Object.keys(settings.workItems).forEach(cat => {
+                const items = settings.workItems[cat] || [];
+                items.forEach((item, idx) => {
+                    const key = `${cat}-${idx}`;
+                    const sel = selected.work[key];
+                    if (sel && sel.checked) {
+                        const qty = sel.qty ?? item.importedQty ?? 0;
+                        const timePerUnit = item.time || 0;
+                        previewTotalHours += (timePerUnit * qty);
+                    }
+                });
+            });
+            const previewTotalDays = Math.ceil(previewTotalHours / 8);
+            
+            let estimatedTimeString = t.byAgreement;
+            if (previewTotalDays > 0) {
+                estimatedTimeString = `~ ${previewTotalDays} ${t.estWorkDays} (${t.byAgreement})`;
+            }
 
             // Get totals and detailed costs
             // We recalculate these to ensure accuracy and avoid parsing issues with thousands separators
@@ -2080,7 +2181,7 @@
                     <!-- Terms Section -->
                     <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 9pt;">
                         <p style="margin: 5px 0;">${t.wasteNote}</p>
-                        <p style="margin: 8px 0;"><strong>${t.estimatedTime}:</strong><br>${t.byAgreement}</p>
+                        <p style="margin: 8px 0;"><strong>${t.estimatedTime}:</strong><br>${estimatedTimeString}</p>
                         <p style="margin: 8px 0;"><strong>${t.warrantyMaterial}:</strong> ${t.byManufacturer}</p>
                         <p style="margin: 8px 0;"><strong>${t.liabilityPeriod}:</strong> 10 ${t.years}</p>
                         <p style="margin: 8px 0;"><strong>${t.paymentTerms}:</strong> 15 ${t.daysAfter}</p>
@@ -2143,6 +2244,157 @@
 
         function closePreview() {
             document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        // ===== Accept Quote & Plan Flow =====
+        let calculatedTotalHours = 0;
+        let calculatedTotalDays = 0;
+
+        function showAcceptModal() {
+            // Check if client name is filled
+            if (!document.getElementById('clName').value.trim()) {
+                alert('Vänligen ange kundnamn innan du accepterar offerten.');
+                return;
+            }
+
+            // Recalculate estimated time dynamically from selected.work
+            calculatedTotalHours = 0;
+            const HOURS_PER_DAY = 8;
+
+            Object.keys(settings.workItems).forEach(cat => {
+                const items = settings.workItems[cat] || [];
+                items.forEach((item, idx) => {
+                    const key = `${cat}-${idx}`;
+                    const sel = selected.work[key];
+                    if (sel && sel.checked) {
+                        const qty = sel.qty ?? item.importedQty ?? 0;
+                        const timePerUnit = item.time || 0;
+                        calculatedTotalHours += (timePerUnit * qty);
+                    }
+                });
+            });
+
+            calculatedTotalDays = Math.ceil(calculatedTotalHours / HOURS_PER_DAY);
+
+            document.getElementById('accTotalHours').innerHTML = `${calculatedTotalHours.toFixed(1)} <span class="text-lg text-slate-500 font-normal" data-i18n="hours">${getT().hours}</span>`;
+            document.getElementById('accTotalDays').innerText = calculatedTotalDays;
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('accStartDate').value = today;
+
+            calculateEndDate();
+            document.getElementById('acceptModal').classList.remove('hidden');
+        }
+
+        function closeAcceptModal() {
+            document.getElementById('acceptModal').classList.add('hidden');
+        }
+
+        function calculateEndDate() {
+            const workers = parseInt(document.getElementById('accWorkers').value) || 1;
+            const startDateStr = document.getElementById('accStartDate').value;
+            
+            if(!startDateStr || calculatedTotalDays === 0) {
+                document.getElementById('accEndDateDisplay').innerText = '-';
+                return;
+            }
+
+            const manDaysNeeded = calculatedTotalDays;
+            const daysToWork = Math.ceil(manDaysNeeded / workers);
+
+            let currentDate = new Date(startDateStr);
+            let addedDays = 0;
+            
+            while (addedDays < Math.max(0, daysToWork - 1)) {
+                currentDate.setDate(currentDate.getDate() + 1);
+                if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+                    addedDays++;
+                }
+            }
+
+            const endIso = currentDate.toISOString().split('T')[0];
+            document.getElementById('accEndDate').value = endIso;
+            document.getElementById('accEndDateDisplay').innerText = new Intl.DateTimeFormat(navigator.language).format(currentDate);
+        }
+
+        function confirmAcceptQuote() {
+            const clientId = saveClientOnQuote();
+            if (!clientId) return;
+
+            const parseNum = (id) => parseFloat(document.getElementById(id).innerText.replace(/[^\d]/g, '')) || 0;
+            const totals = {
+                labor: parseNum('sumLabor'),
+                material: parseNum('sumMaterial'),
+                transport: parseNum('sumTransport'),
+                disposal: parseNum('sumDisposal'),
+                subtotal: parseNum('sumSubtotal'),
+                vat: parseNum('sumVat'),
+                total: parseNum('sumTotal'),
+                rot: parseNum('sumRot'),
+                final: parseNum('sumFinal')
+            };
+
+            const items = [];
+            Object.keys(selected.work).forEach(key => {
+                const sel = selected.work[key];
+                if (sel.checked) {
+                    const catItems = settings.workItems[sel.cat] || [];
+                    const item = catItems[sel.index];
+                    if (item) {
+                        items.push({
+                            name: item.name,
+                            unit: item.unit,
+                            qty: sel.qty || 1,
+                            laborPrice: item.laborPrice || 0,
+                            materialPrice: item.materialPrice || 0
+                        });
+                    }
+                }
+            });
+
+            const startDate = document.getElementById('accStartDate').value;
+            const endDate = document.getElementById('accEndDate').value;
+            const workers = parseInt(document.getElementById('accWorkers').value) || 1;
+
+            let quotes = [];
+            try { quotes = JSON.parse(localStorage.getItem('constructPro_quotes') || '[]'); } catch (e) { }
+
+            const quoteData = {
+                id: currentQuoteId || 'quote_' + Date.now(),
+                clientId: clientId,
+                clientName: document.getElementById('clName').value.trim(),
+                clientAddress: document.getElementById('clAddr').value.trim(),
+                clientCity: document.getElementById('clCity').value.trim(),
+                clientPhone: document.getElementById('clPhone').value.trim(),
+                clientEmail: document.getElementById('clEmail').value.trim(),
+                workType: document.getElementById('clType')?.selectedOptions[0]?.text || 'Renovering',
+                status: 'accepted',
+                items: items,
+                totals: totals,
+                notes: document.getElementById('notes').value.trim(),
+                createdAt: currentQuoteId ? (quotes.find(q=>q.id===currentQuoteId)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                planning: {
+                    totalHours: calculatedTotalHours,
+                    manDays: calculatedTotalDays,
+                    workers: workers,
+                    startDate: startDate,
+                    endDate: endDate
+                }
+            };
+
+            const existingIdx = quotes.findIndex(q => q.id === quoteData.id);
+            if (existingIdx >= 0) {
+                quotes[existingIdx] = quoteData;
+            } else {
+                quotes.push(quoteData);
+                currentQuoteId = quoteData.id;
+            }
+
+            localStorage.setItem('constructPro_quotes', JSON.stringify(quotes));
+
+            closeAcceptModal();
+            alert('Offert Accepterad och planerad framgångsrikt!');
         }
 
         // Send quote via email
