@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Offerter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .quote-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s;
+        }
+
+        .quote-card:hover {
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: #f97316;
+            color: white;
+        }
+
+        .tab-btn:not(.active):hover {
+            background: #f1f5f9;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-4 py-2 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="text-slate-400 hover:text-orange-600 p-2"><i class="fas fa-arrow-left"></i></a>
+            <div id="navLogo">
+                <div class="bg-orange-600 text-white p-2 rounded-lg"><i class="fas fa-hammer"></i></div>
+            </div>
+            <div>
+                <h1 id="navCompName" class="font-bold text-sm">CONSTRUCT PRO</h1>
+                <p class="text-[10px] text-slate-500">Offerthantering</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="oferta.html"
+                class="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600">
+                <i class="fas fa-plus mr-1"></i>Ny Offert
+            </a>
+        </div>
+    </nav>
+
+    <!-- Stats -->
+    <div class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-slate-500 to-slate-600 text-white p-4 rounded-xl cursor-pointer hover:scale-105 transition"
+                onclick="filterByStatus('all')">
+                <p class="text-slate-100 text-xs"><i class="fas fa-file-alt mr-1"></i>Totalt</p>
+                <p id="statTotal" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl cursor-pointer hover:scale-105 transition"
+                onclick="filterByStatus('sent')">
+                <p class="text-blue-100 text-xs"><i class="fas fa-paper-plane mr-1"></i>Skickade</p>
+                <p id="statSent" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl cursor-pointer hover:scale-105 transition"
+                onclick="filterByStatus('accepted')">
+                <p class="text-green-100 text-xs"><i class="fas fa-check-circle mr-1"></i>Accepterade</p>
+                <p id="statAccepted" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl cursor-pointer hover:scale-105 transition"
+                onclick="filterByStatus('finished')">
+                <p class="text-purple-100 text-xs"><i class="fas fa-flag-checkered mr-1"></i>Avslutade</p>
+                <p id="statFinished" class="text-2xl font-bold">0</p>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <button class="tab-btn active" data-status="all" onclick="filterByStatus('all')">Alla</button>
+            <button class="tab-btn" data-status="draft" onclick="filterByStatus('draft')"><i
+                    class="fas fa-edit mr-1"></i>Utkast</button>
+            <button class="tab-btn" data-status="sent" onclick="filterByStatus('sent')"><i
+                    class="fas fa-paper-plane mr-1"></i>Skickade</button>
+            <button class="tab-btn" data-status="accepted" onclick="filterByStatus('accepted')"><i
+                    class="fas fa-check mr-1"></i>Accepterade</button>
+            <button class="tab-btn" data-status="finished" onclick="filterByStatus('finished')"><i
+                    class="fas fa-flag-checkered mr-1"></i>Avslutade</button>
+        </div>
+
+        <!-- Search -->
+        <div class="mb-4">
+            <div class="relative">
+                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                <input type="text" id="searchInput" placeholder="Sök offert, kund..."
+                    class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    oninput="renderQuotes()">
+            </div>
+        </div>
+
+        <!-- Quotes List -->
+        <div id="quotesList" class="space-y-3">
+            <!-- Quotes will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-12 hidden">
+            <i class="fas fa-file-invoice text-6xl text-slate-300 mb-4"></i>
+            <p class="text-slate-500">Inga offerter hittades</p>
+            <a href="oferta.html"
+                class="inline-block mt-4 bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600">
+                <i class="fas fa-plus mr-2"></i>Skapa första offerten
+            </a>
+        </div>
+    </div>
+
+    <!-- Status Change Modal -->
+    <div id="statusModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4"><i class="fas fa-exchange-alt text-orange-500 mr-2"></i>Ändra status</h3>
+            <input type="hidden" id="statusQuoteId">
+            <div class="space-y-2">
+                <button onclick="changeStatus('draft')"
+                    class="w-full text-left p-3 rounded-lg hover:bg-slate-100 flex items-center gap-3">
+                    <i class="fas fa-edit text-slate-500 w-6"></i>
+                    <span>Utkast</span>
+                </button>
+                <button onclick="changeStatus('sent')"
+                    class="w-full text-left p-3 rounded-lg hover:bg-blue-50 flex items-center gap-3">
+                    <i class="fas fa-paper-plane text-blue-500 w-6"></i>
+                    <span>Skickad</span>
+                </button>
+                <button onclick="changeStatus('accepted')"
+                    class="w-full text-left p-3 rounded-lg hover:bg-green-50 flex items-center gap-3">
+                    <i class="fas fa-check-circle text-green-500 w-6"></i>
+                    <span>Accepterad</span>
+                </button>
+                <button onclick="changeStatus('finished')"
+                    class="w-full text-left p-3 rounded-lg hover:bg-purple-50 flex items-center gap-3">
+                    <i class="fas fa-flag-checkered text-purple-500 w-6"></i>
+                    <span>Avslutad</span>
+                </button>
+            </div>
+            <button onclick="closeStatusModal()"
+                class="w-full mt-4 py-2 border rounded-lg hover:bg-slate-50">Avbryt</button>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+            <h3 class="text-lg font-bold mb-2 text-red-600"><i class="fas fa-exclamation-triangle mr-2"></i>Radera
+                offert?</h3>
+            <p class="text-slate-600 mb-4">Denna åtgärd kan inte ångras.</p>
+            <input type="hidden" id="deleteQuoteId">
+            <div class="flex gap-2">
+                <button onclick="closeDeleteModal()"
+                    class="flex-1 py-2 border rounded-lg hover:bg-slate-50">Avbryt</button>
+                <button onclick="confirmDelete()"
+                    class="flex-1 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600">Radera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Date Modal (for accepted quotes) -->
+    <div id="startDateModal" class="modal">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl">
+            <h3 class="text-lg font-bold mb-4 text-green-600">
+                <i class="fas fa-calendar-plus mr-2"></i>Planera projekt
+            </h3>
+            <input type="hidden" id="acceptQuoteId">
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Projektnamn</label>
+                    <input type="text" id="projectName" class="w-full px-3 py-2 border rounded-lg"
+                        placeholder="Badrumsrenovering">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-slate-600 mb-1">Startdatum</label>
+                    <input type="date" id="projectStartDate" class="w-full px-3 py-2 border rounded-lg">
+                </div>
+
+                <div class="bg-slate-50 p-3 rounded-lg">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-slate-600">Total arbetstid:</span>
+                        <span id="totalHoursDisplay" class="font-bold">0 timmar</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-slate-600">Arbetsdagar (8h/dag):</span>
+                        <span id="totalDaysDisplay" class="font-bold">0 dagar</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-600">Beräknat slutdatum:</span>
+                        <span id="endDateDisplay" class="font-bold text-green-600">-</span>
+                    </div>
+                </div>
+
+                <div id="categoryBreakdown" class="space-y-2">
+                    <!-- Category breakdown will be rendered here -->
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-6">
+                <button onclick="closeStartDateModal()"
+                    class="flex-1 py-2 border rounded-lg hover:bg-slate-50">Avbryt</button>
+                <button onclick="createProject()"
+                    class="flex-1 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold">
+                    <i class="fas fa-check mr-2"></i>Skapa projekt
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Quote Modal -->
+    <div id="viewQuoteModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-2xl mx-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div
+                class="bg-gradient-to-r from-orange-500 to-amber-500 text-white p-4 rounded-t-xl flex justify-between items-center sticky top-0">
+                <div>
+                    <h3 class="text-lg font-bold"><i class="fas fa-file-invoice mr-2"></i>Offertdetaljer</h3>
+                    <p id="viewQuoteClient" class="text-sm text-white/80">Kundnamn</p>
+                </div>
+                <button onclick="closeViewQuoteModal()" class="text-white/60 hover:text-white text-xl"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-5">
+                <!-- Quote Info -->
+                <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <span class="text-slate-500">Arbetstyp</span>
+                        <p id="viewQuoteWorkType" class="font-bold">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <span class="text-slate-500">Status</span>
+                        <p id="viewQuoteStatus" class="font-bold">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <span class="text-slate-500">Skapad</span>
+                        <p id="viewQuoteDate" class="font-bold">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <span class="text-slate-500">Giltig till</span>
+                        <p id="viewQuoteValid" class="font-bold">-</p>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="mb-4">
+                    <h4 class="font-bold text-slate-700 mb-2"><i class="fas fa-list mr-2"></i>Arbetsmoment</h4>
+                    <div id="viewQuoteItems" class="border rounded-lg overflow-hidden">
+                        <!-- Items will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Totals -->
+                <div class="bg-slate-100 p-4 rounded-lg">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-600">Arbetskostnad</span>
+                        <span id="viewQuoteLabor" class="font-medium">0 SEK</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-600">Material</span>
+                        <span id="viewQuoteMaterial" class="font-medium">0 SEK</span>
+                    </div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-600">ROT-avdrag</span>
+                        <span id="viewQuoteRot" class="font-medium text-green-600">-0 SEK</span>
+                    </div>
+                    <div class="border-t border-slate-300 my-2"></div>
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>Totalt</span>
+                        <span id="viewQuoteTotal" class="text-orange-600">0 SEK</span>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 mt-4">
+                    <button onclick="closeViewQuoteModal()"
+                        class="flex-1 py-2 border rounded-lg hover:bg-slate-50">Stäng</button>
+                    <button onclick="openFullQuoteDetails()"
+                        class="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-bold">
+                        <i class="fas fa-external-link-alt mr-2"></i>Öppna detaljer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let quotes = [];
+        let currentFilter = 'all';
+        let settings = {};
+
+        // Status config
+        const statusConfig = {
+            draft: { color: 'slate', icon: 'fa-edit', label: 'Utkast' },
+            sent: { color: 'blue', icon: 'fa-paper-plane', label: 'Skickad' },
+            accepted: { color: 'green', icon: 'fa-check-circle', label: 'Accepterad' },
+            finished: { color: 'purple', icon: 'fa-flag-checkered', label: 'Avslutad' }
+        };
+
+        function loadSettings() {
+            const saved = localStorage.getItem('constructPro_settings');
+            if (saved) {
+                try { settings = JSON.parse(saved); } catch (e) { settings = {}; }
+            }
+            if (settings.company) {
+                if (settings.company.name) document.getElementById('navCompName').innerText = settings.company.name;
+                if (settings.company.logo) document.getElementById('navLogo').innerHTML = `<img src="${settings.company.logo}" class="h-10 object-contain">`;
+            }
+        }
+
+        function loadQuotes() {
+            try {
+                quotes = JSON.parse(localStorage.getItem('constructPro_quotes') || '[]');
+            } catch (e) { quotes = []; }
+        }
+
+        function saveQuotes() {
+            localStorage.setItem('constructPro_quotes', JSON.stringify(quotes));
+        }
+
+        function updateStats() {
+            document.getElementById('statTotal').innerText = quotes.length;
+            document.getElementById('statSent').innerText = quotes.filter(q => q.status === 'sent').length;
+            document.getElementById('statAccepted').innerText = quotes.filter(q => q.status === 'accepted').length;
+            document.getElementById('statFinished').innerText = quotes.filter(q => q.status === 'finished').length;
+        }
+
+        function filterByStatus(status) {
+            currentFilter = status;
+
+            // Update tab styles
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.status === status);
+            });
+
+            renderQuotes();
+        }
+
+        function renderQuotes() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = quotes;
+
+            // Filter by status
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(q => q.status === currentFilter);
+            }
+
+            // Filter by search
+            if (search) {
+                filtered = filtered.filter(q =>
+                    q.clientName?.toLowerCase().includes(search) ||
+                    q.id?.toLowerCase().includes(search) ||
+                    q.workType?.toLowerCase().includes(search)
+                );
+            }
+
+            // Sort by date (newest first)
+            filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            const container = document.getElementById('quotesList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (filtered.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = filtered.map(quote => renderQuoteCard(quote)).join('');
+        }
+
+        function renderQuoteCard(quote) {
+            const cfg = statusConfig[quote.status] || statusConfig.draft;
+            const date = quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('sv-SE') : '-';
+            const total = quote.totals?.final || quote.totals?.total || 0;
+
+            return `
+                <div class="quote-card p-4">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h3 class="font-bold text-slate-800">${quote.clientName || 'Okänd kund'}</h3>
+                            <p class="text-sm text-slate-500">${quote.workType || 'Renovering'}</p>
+                        </div>
+                        <span class="badge bg-${cfg.color}-100 text-${cfg.color}-700">
+                            <i class="fas ${cfg.icon} mr-1"></i>${cfg.label}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <div class="flex gap-4">
+                            <span class="text-slate-500"><i class="fas fa-calendar mr-1"></i>${date}</span>
+                            <span class="font-bold text-orange-600">${Math.round(total).toLocaleString()} SEK</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="openStatusModal('${quote.id}')" class="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded" title="Ändra status">
+                                <i class="fas fa-exchange-alt"></i>
+                            </button>
+                            <button onclick="viewQuote('${quote.id}')" class="p-2 text-slate-400 hover:text-green-500 hover:bg-green-50 rounded" title="Visa">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button onclick="openDeleteModal('${quote.id}')" class="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded" title="Radera">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openStatusModal(quoteId) {
+            document.getElementById('statusQuoteId').value = quoteId;
+            document.getElementById('statusModal').classList.add('active');
+        }
+
+        function closeStatusModal() {
+            document.getElementById('statusModal').classList.remove('active');
+        }
+
+        // View Quote Functions
+        let currentViewQuoteId = null;
+
+        function viewQuote(quoteId) {
+            const quote = quotes.find(q => q.id === quoteId);
+            if (!quote) return;
+            currentViewQuoteId = quoteId;
+
+            // Populate header
+            document.getElementById('viewQuoteClient').textContent = quote.clientName || 'Okänd kund';
+            document.getElementById('viewQuoteWorkType').textContent = quote.workType || 'Renovering';
+
+            // Status
+            const statusCfg = statusConfig[quote.status] || statusConfig.draft;
+            document.getElementById('viewQuoteStatus').innerHTML = `<span class="text-${statusCfg.color}-600"><i class="fas ${statusCfg.icon} mr-1"></i>${statusCfg.label}</span>`;
+
+            // Dates
+            document.getElementById('viewQuoteDate').textContent = quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('sv-SE') : '-';
+            const validDate = quote.createdAt ? new Date(new Date(quote.createdAt).getTime() + 30 * 24 * 60 * 60 * 1000) : null;
+            document.getElementById('viewQuoteValid').textContent = validDate ? validDate.toLocaleDateString('sv-SE') : '-';
+
+            // Items - check different possible structures
+            const items = quote.items || quote.selectedItems || [];
+            const hourlyRate = settings.pricing?.hourlyRate || 500;
+
+            if (items.length > 0) {
+                let itemsHtml = `
+                    <table class="w-full text-sm">
+                        <thead class="bg-slate-100">
+                            <tr>
+                                <th class="text-left p-2">Moment</th>
+                                <th class="text-right p-2">Antal/Tim</th>
+                                <th class="text-right p-2">Pris</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+                items.forEach(item => {
+                    const name = item.name || item.label || item.text || '-';
+                    const qty = item.qty || item.quantity || 1;
+                    // Use laborPrice + materialPrice for total price
+                    const laborPrice = item.laborPrice || 0;
+                    const materialPrice = item.materialPrice || 0;
+                    const totalPrice = laborPrice + materialPrice;
+
+                    itemsHtml += `
+                        <tr class="border-t">
+                            <td class="p-2">${name}</td>
+                            <td class="text-right p-2">${qty} ${item.unit || 'st'}</td>
+                            <td class="text-right p-2 font-medium text-green-600">${Math.round(totalPrice).toLocaleString()} kr</td>
+                        </tr>`;
+                });
+
+                itemsHtml += `</tbody></table>`;
+                document.getElementById('viewQuoteItems').innerHTML = itemsHtml;
+            } else {
+                document.getElementById('viewQuoteItems').innerHTML = '<p class="p-4 text-slate-400 text-center">Inga arbetsmoment registrerade</p>';
+            }
+
+            // Totals
+            const totals = quote.totals || {};
+            document.getElementById('viewQuoteLabor').textContent = `${Math.round(totals.labor || 0).toLocaleString()} SEK`;
+            document.getElementById('viewQuoteMaterial').textContent = `${Math.round(totals.material || 0).toLocaleString()} SEK`;
+            document.getElementById('viewQuoteRot').textContent = `-${Math.round(totals.rot || 0).toLocaleString()} SEK`;
+            document.getElementById('viewQuoteTotal').textContent = `${Math.round(totals.final || totals.total || 0).toLocaleString()} SEK`;
+
+            // Show modal
+            document.getElementById('viewQuoteModal').classList.add('active');
+        }
+
+        function openFullQuoteDetails() {
+            if (!currentViewQuoteId) return;
+            const quote = quotes.find(q => q.id === currentViewQuoteId);
+            if (!quote) return;
+
+            // Get client details
+            let clients = [];
+            try { clients = JSON.parse(localStorage.getItem('constructPro_kunder') || '[]'); } catch (e) { }
+            const client = clients.find(c => c.id === quote.clientId) || {};
+
+            // Build items table rows
+            const items = quote.items || quote.selectedItems || [];
+            let itemsRows = '';
+            items.forEach(item => {
+                const name = item.name || item.label || '-';
+                const qty = item.qty || item.quantity || 1;
+                const unit = item.unit || 'st';
+                const laborPrice = item.laborPrice || 0;
+                const materialPrice = item.materialPrice || 0;
+                const totalPrice = Math.round(laborPrice + materialPrice).toLocaleString();
+                itemsRows += '<tr class="border-t"><td class="p-2">' + name + '</td><td class="text-right p-2">' + qty + ' ' + unit + '</td><td class="text-right p-2 font-medium">' + totalPrice + ' kr</td></tr>';
+            });
+
+            // Build HTML using string concatenation to avoid script tag issues
+            let html = '<!DOCTYPE html><html lang="sv"><head><meta charset="UTF-8">';
+            html += '<title>Projektdetaljer - ' + (quote.clientName || 'Offert') + '</title>';
+            html += '<script src="https://cdn.tailwindcss.com"><\/script>';
+            html += '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">';
+            html += '</head><body class="bg-slate-100 p-8">';
+            html += '<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">';
+
+            // Header
+            html += '<div class="flex justify-between items-start mb-6"><div>';
+            html += '<h1 class="text-2xl font-bold text-slate-800"><i class="fas fa-file-invoice text-orange-500 mr-2"></i>' + (quote.clientName || 'Projekt') + '</h1>';
+            html += '<p class="text-slate-500">' + (quote.workType || 'Renovering') + '</p></div>';
+            html += '<button onclick="window.print()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"><i class="fas fa-print mr-2"></i>Skriv ut</button></div>';
+
+            // Info grid
+            html += '<div class="grid grid-cols-2 gap-6 mb-6">';
+            html += '<div class="border rounded-lg p-4"><h2 class="font-bold text-slate-700 mb-3"><i class="fas fa-user mr-2"></i>Kundinformation</h2>';
+            html += '<p class="text-sm"><strong>Namn:</strong> ' + (client.name || quote.clientName || '-') + '</p>';
+            html += '<p class="text-sm"><strong>Telefon:</strong> ' + (client.phone || quote.phone || '-') + '</p>';
+            html += '<p class="text-sm"><strong>Email:</strong> ' + (client.email || quote.email || '-') + '</p>';
+            html += '<p class="text-sm"><strong>Adress:</strong> ' + (client.address || quote.address || '-') + '</p>';
+            html += '<p class="text-sm"><strong>Personnummer:</strong> ' + (client.personalNumber || client.personnummer || '-') + '</p></div>';
+
+            html += '<div class="border rounded-lg p-4"><h2 class="font-bold text-slate-700 mb-3"><i class="fas fa-calendar mr-2"></i>Offertinfo</h2>';
+            html += '<p class="text-sm"><strong>Skapad:</strong> ' + (quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('sv-SE') : '-') + '</p>';
+            html += '<p class="text-sm"><strong>Status:</strong> ' + (quote.status || 'draft') + '</p>';
+            html += '<p class="text-sm"><strong>Offert-ID:</strong> ' + quote.id + '</p>';
+            if (quote.projectId) html += '<p class="text-sm"><strong>Projekt-ID:</strong> ' + quote.projectId + '</p>';
+            html += '</div></div>';
+
+            // Items table
+            html += '<div class="border rounded-lg p-4 mb-6"><h2 class="font-bold text-slate-700 mb-3"><i class="fas fa-list mr-2"></i>Arbetsmoment</h2>';
+            html += '<table class="w-full text-sm"><thead class="bg-slate-100"><tr><th class="text-left p-2">Moment</th><th class="text-right p-2">Antal</th><th class="text-right p-2">Pris</th></tr></thead>';
+            html += '<tbody>' + itemsRows + '</tbody></table></div>';
+
+            // Totals
+            html += '<div class="bg-slate-100 rounded-lg p-4">';
+            html += '<h2 class="font-bold text-slate-700 mb-3"><i class="fas fa-calculator mr-2"></i>Kostnadssammanställning</h2>';
+            html += '<div class="flex justify-between text-sm mb-1"><span>Arbetskostnad</span><span>' + Math.round(quote.totals?.labor || 0).toLocaleString() + ' SEK</span></div>';
+            html += '<div class="flex justify-between text-sm mb-1"><span>Material</span><span>' + Math.round(quote.totals?.material || 0).toLocaleString() + ' SEK</span></div>';
+            html += '<div class="flex justify-between text-sm mb-1 text-green-600"><span>ROT-avdrag</span><span>-' + Math.round(quote.totals?.rot || 0).toLocaleString() + ' SEK</span></div>';
+            html += '<div class="border-t border-slate-300 my-2"></div>';
+            html += '<div class="flex justify-between text-xl font-bold"><span>Totalt</span><span class="text-orange-600">' + Math.round(quote.totals?.final || quote.totals?.total || 0).toLocaleString() + ' SEK</span></div>';
+            html += '</div></div></body></html>';
+
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(html);
+            newWindow.document.close();
+            closeViewQuoteModal();
+        }
+
+        function closeViewQuoteModal() {
+            document.getElementById('viewQuoteModal').classList.remove('active');
+        }
+
+        function changeStatus(newStatus) {
+            const quoteId = document.getElementById('statusQuoteId').value;
+            const quote = quotes.find(q => q.id === quoteId);
+
+            if (!quote) {
+                closeStatusModal();
+                return;
+            }
+
+            // If accepting, show start date modal first
+            if (newStatus === 'accepted' && quote.status !== 'accepted') {
+                closeStatusModal();
+                openStartDateModal(quoteId);
+                return;
+            }
+
+            // Otherwise just update status
+            quote.status = newStatus;
+            if (newStatus === 'sent' && !quote.sentAt) quote.sentAt = new Date().toISOString();
+            if (newStatus === 'finished' && !quote.finishedAt) quote.finishedAt = new Date().toISOString();
+
+            // Sync with Projects (Gantt Chart)
+            try {
+                const settings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+                if (settings.projects) {
+                    const projIdx = settings.projects.findIndex(p => p.quoteId === quote.id || (quote.projectId && p.id ===
+                        quote.projectId));
+                    if (projIdx >= 0) {
+                        if (newStatus === 'finished') {
+                            settings.projects[projIdx].status = 'completed';
+                            settings.projects[projIdx].color = '#94a3b8'; // Grey
+                        } else if (newStatus === 'accepted') {
+                            settings.projects[projIdx].status = 'active';
+                            settings.projects[projIdx].color = '#22c55e'; // Green
+                        }
+                        localStorage.setItem('constructPro_settings', JSON.stringify(settings));
+                    }
+                }
+            } catch (e) { console.error('Error syncing project status:', e); }
+
+            saveQuotes();
+            updateStats();
+            renderQuotes();
+            closeStatusModal();
+        }
+
+        // ===== PROJECT SCHEDULING =====
+        const categoryColors = {
+            demolition: { bg: '#ef4444', label: 'Rivning' },
+            preparation: { bg: '#f97316', label: 'Förarbete' },
+            waterproofing: { bg: '#3b82f6', label: 'Tätskikt' },
+            ceiling: { bg: '#a855f7', label: 'Tak/Målning' },
+            fixtures: { bg: '#22c55e', label: 'Montage' },
+            plumbing: { bg: '#06b6d4', label: 'VVS' },
+            electrical: { bg: '#eab308', label: 'El' },
+            other: { bg: '#64748b', label: 'Övrigt' }
+        };
+
+        let currentQuoteForProject = null;
+        let calculatedPhases = [];
+
+        function openStartDateModal(quoteId) {
+            const quote = quotes.find(q => q.id === quoteId);
+            if (!quote) return;
+
+            currentQuoteForProject = quote;
+            document.getElementById('acceptQuoteId').value = quoteId;
+            document.getElementById('projectName').value = `${quote.clientName} - ${quote.workType || 'Renovering'}`;
+
+            // Set default start date to tomorrow
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            document.getElementById('projectStartDate').value = tomorrow.toISOString().split('T')[0];
+
+            // Calculate hours and phases from quote items
+            calculateQuoteHours(quote);
+            updateEndDatePreview();
+
+            document.getElementById('startDateModal').classList.add('active');
+
+            // Add listener for date changes
+            document.getElementById('projectStartDate').addEventListener('change', updateEndDatePreview);
+        }
+
+        function closeStartDateModal() {
+            document.getElementById('startDateModal').classList.remove('active');
+            currentQuoteForProject = null;
+        }
+
+        function calculateQuoteHours(quote) {
+            // Group items by category and sum hours
+            const categoryHours = {};
+            let totalHours = 0;
+
+            if (quote.items && quote.items.length > 0) {
+                quote.items.forEach(item => {
+                    // Try to get time from item, default to laborPrice/450 as estimate
+                    const itemTime = item.time || (item.laborPrice / 450) || 1;
+                    const qty = item.qty || 1;
+                    const hours = itemTime * qty;
+
+                    const cat = item.category || 'other';
+                    if (!categoryHours[cat]) categoryHours[cat] = 0;
+                    categoryHours[cat] += hours;
+                    totalHours += hours;
+                });
+            }
+
+            // If no items with time, estimate from total labor cost
+            if (totalHours === 0 && quote.totals?.labor) {
+                totalHours = Math.ceil(quote.totals.labor / 450); // Assume 450 SEK/hour
+                categoryHours['other'] = totalHours;
+            }
+
+            // Minimum 8 hours
+            if (totalHours < 8) totalHours = 8; const totalDays = Math.ceil(totalHours / 8);
+            document.getElementById('totalHoursDisplay').innerText = `${Math.round(totalHours)} timmar`;
+            document.getElementById('totalDaysDisplay').innerText = `${totalDays} dagar`; // Build phases for Gantt
+            calculatedPhases = []; let dayOffset = 0; Object.keys(categoryHours).forEach(cat => {
+                const hours = categoryHours[cat];
+                const days = Math.ceil(hours / 8);
+                const cfg = categoryColors[cat] || categoryColors.other;
+
+                calculatedPhases.push({
+                    category: cat,
+                    name: cfg.label,
+                    hours: hours,
+                    days: days,
+                    startDay: dayOffset,
+                    color: cfg.bg
+                });
+
+                dayOffset += days;
+            });
+
+            // Render category breakdown
+            const container = document.getElementById('categoryBreakdown');
+            container.innerHTML = calculatedPhases.map(phase => `
+    <div class="flex items-center gap-2 text-sm">
+        <span class="w-3 h-3 rounded" style="background: ${phase.color}"></span>
+        <span class="flex-1">${phase.name}</span>
+        <span class="text-slate-500">${Math.round(phase.hours)}h</span>
+        <span class="font-bold">${phase.days} dag${phase.days > 1 ? 'ar' : ''}</span>
+    </div>
+    `).join('');
+        }
+
+        function updateEndDatePreview() {
+            const startDateStr = document.getElementById('projectStartDate').value;
+            if (!startDateStr) return;
+
+            const totalDays = calculatedPhases.reduce((sum, p) => sum + p.days, 0) || 1;
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + totalDays - 1);
+
+            document.getElementById('endDateDisplay').innerText = endDate.toLocaleDateString('sv-SE');
+        }
+
+        function createProject() {
+            const quoteId = document.getElementById('acceptQuoteId').value;
+            const quote = quotes.find(q => q.id === quoteId);
+            if (!quote) return;
+
+            const projectName = document.getElementById('projectName').value.trim();
+            const startDateStr = document.getElementById('projectStartDate').value;
+
+            if (!projectName || !startDateStr) {
+                alert('Fyll i projektnamn och startdatum.');
+                return;
+            }
+
+            const totalDays = calculatedPhases.reduce((sum, p) => sum + p.days, 0) || 1;
+            const startDate = new Date(startDateStr);
+            const endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + totalDays - 1);
+
+            // Create project object with ALL quote data for complete lifecycle connection
+            const project = {
+                id: 'proj_' + Date.now(),
+                name: projectName,
+                quoteId: quoteId,
+                // Client connection
+                clientName: quote.clientName,
+                clientId: quote.clientId,
+                // Work details
+                workType: quote.workType,
+                address: quote.address,
+                // All items and pricing
+                items: quote.items || [],
+                totals: quote.totals || {},
+                // Timeline
+                startDate: startDateStr,
+                endDate: endDate.toISOString().split('T')[0],
+                totalHours: calculatedPhases.reduce((sum, p) => sum + p.hours, 0),
+                phases: calculatedPhases,
+                // Status tracking
+                status: 'planned',
+                createdAt: new Date().toISOString()
+            };
+
+            // Load settings and add project
+            let savedSettings = {};
+            try {
+                savedSettings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+            } catch (e) { savedSettings = {}; }
+
+            if (!savedSettings.projects) savedSettings.projects = [];
+            savedSettings.projects.push(project);
+            localStorage.setItem('constructPro_settings', JSON.stringify(savedSettings));
+
+            // Update quote status to accepted
+            quote.status = 'accepted';
+            quote.acceptedAt = new Date().toISOString();
+            quote.projectId = project.id;
+            saveQuotes();
+            updateStats();
+            renderQuotes();
+
+            closeStartDateModal();
+            alert(`Projekt "${projectName}" skapades!\n\nStart: ${startDateStr}\nSlut:
+    ${endDate.toLocaleDateString('sv-SE')}\n\nDu kan se det i projektplaneringen på startsidan.`);
+        }
+
+        function openDeleteModal(quoteId) {
+            document.getElementById('deleteQuoteId').value = quoteId;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+        }
+
+        function confirmDelete() {
+            const quoteId = document.getElementById('deleteQuoteId').value;
+            quotes = quotes.filter(q => q.id !== quoteId);
+            saveQuotes();
+            updateStats();
+            renderQuotes();
+            closeDeleteModal();
+        }
+
+        // viewQuote function is defined above with modal display
+
+        // Init
+        loadSettings();
+        loadQuotes();
+        updateStats();
+        renderQuotes();
+    </script>
+</body>
+
+</html>

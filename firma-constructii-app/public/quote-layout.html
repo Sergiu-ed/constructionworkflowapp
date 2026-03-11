@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Quote Layout - Construct Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            /* Core Palette */
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-glass: rgba(255, 255, 255, 0.05);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(255, 255, 255, 0.15);
+            
+            /* Accent Colors */
+            --accent-primary: #f97316;
+            --accent-glow: rgba(249, 115, 22, 0.4);
+            --accent-success: #22c55e;
+            --accent-success-glow: rgba(34, 197, 94, 0.3);
+            
+            /* Text */
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            
+            /* Gradients */
+            --gradient-premium: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.02) 100%);
+            --gradient-dark: linear-gradient(180deg, #0a0a0f 0%, #0f0f1a 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gradient-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.5;
+        }
+
+        /* ========================================
+           GLASSMORPHISM UTILITIES
+        ======================================== */
+        .glass {
+            background: var(--bg-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .glass-strong {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border-accent);
+        }
+
+        /* ========================================
+           MAIN CONTAINER & BENTO GRID
+        ======================================== */
+        .quote-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 32px;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+
+        /* ========================================
+           HEADER SECTION
+        ======================================== */
+        .quote-header {
+            grid-column: span 12;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            border-radius: 24px;
+            margin-bottom: 12px;
+        }
+
+        .company-brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .company-logo {
+            width: 56px;
+            height: 56px;
+            background: var(--gradient-premium);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        .company-info h1 {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .company-info p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .quote-badge {
+            background: var(--gradient-premium);
+            padding: 12px 28px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        /* ========================================
+           BENTO CARDS
+        ======================================== */
+        .bento-card {
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bento-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .bento-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-accent);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .card-title h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-badge {
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* ========================================
+           CLIENT INFO CARD
+        ======================================== */
+        .client-card {
+            grid-column: span 5;
+        }
+
+        .client-card .card-icon {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .client-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .client-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .client-field.full-width {
+            grid-column: span 2;
+        }
+
+        .field-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .field-value {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-primary);
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+        }
+
+        .field-value.highlight {
+            background: rgba(249, 115, 22, 0.1);
+            border-color: rgba(249, 115, 22, 0.3);
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* ========================================
+           DIMENSIONS CARD
+        ======================================== */
+        .dimensions-card {
+            grid-column: span 3;
+        }
+
+        .dimensions-card .card-icon {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+
+        .dimension-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .dimension-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+        }
+
+        .dimension-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .dimension-value {
+            font-size: 15px;
+            font-weight: 600;
+            font-feature-settings: 'tnum';
+        }
+
+        .area-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .area-box {
+            text-align: center;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(168, 85, 247, 0.02));
+            border-radius: 14px;
+            border: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        .area-box .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .area-box .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #a855f7;
+            margin-top: 4px;
+        }
+
+        /* ========================================
+           QUOTE DATE & NUMBER
+        ======================================== */
+        .quote-meta {
+            grid-column: span 4;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .quote-meta .card-icon {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .meta-item {
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .meta-item .label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 6px;
+        }
+
+        .meta-item .value {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .meta-item.featured {
+            background: rgba(249, 115, 22, 0.1);
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+
+        .meta-item.featured .value {
+            color: var(--accent-primary);
+        }
+
+        /* ========================================
+           WORK ITEMS SECTION
+        ======================================== */
+        .work-section {
+            grid-column: span 8;
+        }
+
+        .work-section .card-icon {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .work-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .work-table thead tr {
+            background: transparent;
+        }
+
+        .work-table th {
+            font-size: 10px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            padding: 8px 16px;
+            text-align: left;
+        }
+
+        .work-table th:last-child {
+            text-align: right;
+        }
+
+        .work-table tbody tr {
+            background: rgba(255, 255, 255, 0.02);
+            transition: all 0.2s ease;
+        }
+
+        .work-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .work-table td {
+            padding: 14px 16px;
+            font-size: 14px;
+        }
+
+        .work-table td:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .work-table td:last-child {
+            border-radius: 0 12px 12px 0;
+            text-align: right;
+            font-weight: 600;
+            font-feature-settings: 'tnum';
+        }
+
+        .work-category {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 10px 4px 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-left: 12px;
+        }
+
+        .category-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .category-demolition { background: #ef4444; }
+        .category-preparation { background: #f97316; }
+        .category-waterproofing { background: #3b82f6; }
+        .category-fixtures { background: #22c55e; }
+        .category-plumbing { background: #06b6d4; }
+        .category-electrical { background: #eab308; }
+
+        .work-table tfoot tr {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.02));
+        }
+
+        .work-table tfoot td {
+            padding: 16px;
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .work-table tfoot td:first-child {
+            border-radius: 14px 0 0 14px;
+            border-left: 3px solid var(--accent-success);
+        }
+
+        .work-table tfoot td:last-child {
+            border-radius: 0 14px 14px 0;
+            color: var(--accent-success);
+        }
+
+        /* ========================================
+           SUMMARY CARD
+        ======================================== */
+        .summary-section {
+            grid-column: span 4;
+        }
+
+        .summary-section .card-icon {
+            background: rgba(249, 115, 22, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .summary-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+        }
+
+        .summary-row .label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .summary-row .amount {
+            font-size: 15px;
+            font-weight: 600;
+            font-feature-settings: 'tnum';
+        }
+
+        .summary-divider {
+            height: 1px;
+            background: var(--border-subtle);
+            margin: 8px 0;
+        }
+
+        .summary-subtotal {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 14px 16px;
+            border-radius: 14px;
+        }
+
+        .summary-subtotal .label {
+            font-weight: 600;
+        }
+
+        .summary-total-box {
+            margin-top: 16px;
+            padding: 20px;
+            background: var(--gradient-premium);
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 16px 48px var(--accent-glow);
+        }
+
+        .summary-total-box .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+        }
+
+        .summary-total-box .amount {
+            font-size: 32px;
+            font-weight: 800;
+            margin-top: 6px;
+            letter-spacing: -1px;
+        }
+
+        /* ========================================
+           ROT DEDUCTION
+        ======================================== */
+        .rot-card {
+            grid-column: span 12;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.02)) !important;
+            border-color: rgba(34, 197, 94, 0.2) !important;
+        }
+
+        .rot-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .rot-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .rot-icon {
+            width: 56px;
+            height: 56px;
+            background: rgba(34, 197, 94, 0.2);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--accent-success);
+        }
+
+        .rot-details h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-success);
+        }
+
+        .rot-details p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .rot-amount {
+            text-align: right;
+        }
+
+        .rot-amount .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rot-amount .value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--accent-success);
+            margin-top: 4px;
+        }
+
+        /* ========================================
+           FINAL PAYMENT
+        ======================================== */
+        .final-payment {
+            grid-column: span 12;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 32px 40px;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(249, 115, 22, 0.05));
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+
+        .final-label {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .final-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--gradient-premium);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 12px 40px var(--accent-glow);
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 12px 40px var(--accent-glow); }
+            50% { box-shadow: 0 16px 60px var(--accent-glow); }
+        }
+
+        .final-text h2 {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .final-text p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .final-amount {
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--gradient-premium);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -2px;
+        }
+
+        .final-currency {
+            font-size: 20px;
+            margin-left: 8px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        /* ========================================
+           FOOTER
+        ======================================== */
+        .quote-footer {
+            grid-column: span 12;
+            text-align: center;
+            padding: 24px;
+            margin-top: 12px;
+        }
+
+        .quote-footer p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-divider {
+            width: 60px;
+            height: 2px;
+            background: var(--gradient-premium);
+            margin: 0 auto 16px;
+            border-radius: 2px;
+        }
+
+        /* ========================================
+           RESPONSIVE
+        ======================================== */
+        @media (max-width: 1200px) {
+            .client-card, .dimensions-card, .quote-meta {
+                grid-column: span 6;
+            }
+            .work-section, .summary-section {
+                grid-column: span 12;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .quote-container {
+                padding: 16px;
+            }
+            .bento-grid {
+                gap: 12px;
+            }
+            .client-card, .dimensions-card, .quote-meta,
+            .work-section, .summary-section {
+                grid-column: span 12;
+            }
+            .quote-header {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+            .company-brand {
+                flex-direction: column;
+            }
+            .final-payment {
+                flex-direction: column;
+                text-align: center;
+                gap: 24px;
+                padding: 24px;
+            }
+            .final-label {
+                flex-direction: column;
+            }
+            .client-details {
+                grid-template-columns: 1fr;
+            }
+            .client-field.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        /* ========================================
+           PRINT STYLES
+        ======================================== */
+        @media print {
+            body {
+                background: white !important;
+                color: #1a1a1a !important;
+            }
+            .glass, .glass-strong {
+                background: white !important;
+                border: 1px solid #e5e5e5 !important;
+            }
+            .bento-card {
+                box-shadow: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quote-container">
+        <div class="bento-grid">
+            
+            <!-- ====== HEADER ====== -->
+            <header class="quote-header glass">
+                <div class="company-brand">
+                    <div class="company-logo">
+                        <i class="fas fa-hammer"></i>
+                    </div>
+                    <div class="company-info">
+                        <h1>CONSTRUCT PRO</h1>
+                        <p>Premium Construction Services</p>
+                    </div>
+                </div>
+                <div class="quote-badge">OFFERT</div>
+            </header>
+
+            <!-- ====== CLIENT INFO ====== -->
+            <div class="bento-card glass client-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3>Kundinformation</h3>
+                    </div>
+                </div>
+                <div class="client-details">
+                    <div class="client-field full-width">
+                        <span class="field-label">Namn</span>
+                        <div class="field-value">Johan Andersson</div>
+                    </div>
+                    <div class="client-field full-width">
+                        <span class="field-label">Adress</span>
+                        <div class="field-value">Kungsgatan 15, 114 56 Stockholm</div>
+                    </div>
+                    <div class="client-field">
+                        <span class="field-label">Telefon</span>
+                        <div class="field-value">+46 70 123 4567</div>
+                    </div>
+                    <div class="client-field">
+                        <span class="field-label">E-post</span>
+                        <div class="field-value">johan@email.se</div>
+                    </div>
+                    <div class="client-field full-width">
+                        <span class="field-label">Projekt</span>
+                        <div class="field-value highlight">Badrumsrenovering</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== DIMENSIONS ====== -->
+            <div class="bento-card glass dimensions-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-ruler-combined"></i>
+                        </div>
+                        <h3>Mått</h3>
+                    </div>
+                </div>
+                <div class="dimension-grid">
+                    <div class="dimension-row">
+                        <span class="dimension-label">Längd</span>
+                        <span class="dimension-value">3.2 m</span>
+                    </div>
+                    <div class="dimension-row">
+                        <span class="dimension-label">Bredd</span>
+                        <span class="dimension-value">2.4 m</span>
+                    </div>
+                    <div class="dimension-row">
+                        <span class="dimension-label">Höjd</span>
+                        <span class="dimension-value">2.5 m</span>
+                    </div>
+                </div>
+                <div class="area-summary">
+                    <div class="area-box">
+                        <span class="label">Väggar</span>
+                        <div class="value">28 m²</div>
+                    </div>
+                    <div class="area-box">
+                        <span class="label">Golv</span>
+                        <div class="value">7.7 m²</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== QUOTE META ====== -->
+            <div class="bento-card glass quote-meta">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-file-invoice"></i>
+                        </div>
+                        <h3>Offertdetaljer</h3>
+                    </div>
+                </div>
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <div class="label">Datum</div>
+                        <div class="value">2026-01-15</div>
+                    </div>
+                    <div class="meta-item featured">
+                        <div class="label">Offert #</div>
+                        <div class="value">Q-2026-0042</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="label">Giltig t.o.m.</div>
+                        <div class="value">2026-02-15</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="label">Valuta</div>
+                        <div class="value">SEK 🇸🇪</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== WORK ITEMS ====== -->
+            <div class="bento-card glass work-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-hard-hat"></i>
+                        </div>
+                        <h3>Arbeten</h3>
+                    </div>
+                    <span class="card-badge glass-strong">12 poster</span>
+                </div>
+                <table class="work-table">
+                    <thead>
+                        <tr>
+                            <th>Beskrivning</th>
+                            <th>Antal</th>
+                            <th>Enhet</th>
+                            <th>Summa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                Rivning av kakel & klinker
+                                <span class="work-category"><span class="category-dot category-demolition"></span>Rivning</span>
+                            </td>
+                            <td>28</td>
+                            <td>m²</td>
+                            <td>8,400 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Rivning av golvklinker
+                                <span class="work-category"><span class="category-dot category-demolition"></span>Rivning</span>
+                            </td>
+                            <td>7.7</td>
+                            <td>m²</td>
+                            <td>2,310 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Putslagning väggar
+                                <span class="work-category"><span class="category-dot category-preparation"></span>Förarbete</span>
+                            </td>
+                            <td>28</td>
+                            <td>m²</td>
+                            <td>5,600 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Golvspackling & avjämning
+                                <span class="work-category"><span class="category-dot category-preparation"></span>Förarbete</span>
+                            </td>
+                            <td>7.7</td>
+                            <td>m²</td>
+                            <td>2,310 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Tätskikt väggar
+                                <span class="work-category"><span class="category-dot category-waterproofing"></span>Tätskikt</span>
+                            </td>
+                            <td>28</td>
+                            <td>m²</td>
+                            <td>11,200 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Tätskikt golv
+                                <span class="work-category"><span class="category-dot category-waterproofing"></span>Tätskikt</span>
+                            </td>
+                            <td>7.7</td>
+                            <td>m²</td>
+                            <td>3,080 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Plattsättning väggar
+                                <span class="work-category"><span class="category-dot category-fixtures"></span>Montage</span>
+                            </td>
+                            <td>28</td>
+                            <td>m²</td>
+                            <td>16,800 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Plattsättning golv
+                                <span class="work-category"><span class="category-dot category-fixtures"></span>Montage</span>
+                            </td>
+                            <td>7.7</td>
+                            <td>m²</td>
+                            <td>4,620 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                VVS installation
+                                <span class="work-category"><span class="category-dot category-plumbing"></span>VVS</span>
+                            </td>
+                            <td>1</td>
+                            <td>pauschal</td>
+                            <td>18,000 SEK</td>
+                        </tr>
+                        <tr>
+                            <td>
+                                Elinstallation
+                                <span class="work-category"><span class="category-dot category-electrical"></span>El</span>
+                            </td>
+                            <td>1</td>
+                            <td>pauschal</td>
+                            <td>8,500 SEK</td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3">Summa arbeten</td>
+                            <td>80,820 SEK</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- ====== SUMMARY ====== -->
+            <div class="bento-card glass summary-section">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-calculator"></i>
+                        </div>
+                        <h3>Sammanställning</h3>
+                    </div>
+                </div>
+                <div class="summary-list">
+                    <div class="summary-row">
+                        <span class="label"><i class="fas fa-hard-hat" style="margin-right: 8px; opacity: 0.5;"></i>Arbeten</span>
+                        <span class="amount">80,820 SEK</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label"><i class="fas fa-boxes-stacked" style="margin-right: 8px; opacity: 0.5;"></i>Material</span>
+                        <span class="amount">24,500 SEK</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label"><i class="fas fa-truck" style="margin-right: 8px; opacity: 0.5;"></i>Transport</span>
+                        <span class="amount">1,200 SEK</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label"><i class="fas fa-dumpster" style="margin-right: 8px; opacity: 0.5;"></i>Avfallshantering</span>
+                        <span class="amount">2,500 SEK</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-row summary-subtotal">
+                        <span class="label">Delsumma</span>
+                        <span class="amount">109,020 SEK</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="label">Moms (25%)</span>
+                        <span class="amount">27,255 SEK</span>
+                    </div>
+                </div>
+                <div class="summary-total-box">
+                    <div class="label">Totalt inkl. moms</div>
+                    <div class="amount">136,275 SEK</div>
+                </div>
+            </div>
+
+            <!-- ====== ROT DEDUCTION ====== -->
+            <div class="bento-card glass rot-card">
+                <div class="rot-content">
+                    <div class="rot-info">
+                        <div class="rot-icon">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div class="rot-details">
+                            <h3>ROT-avdrag (30%)</h3>
+                            <p>Tillämpas på arbetskostnad 80,820 SEK • Skattereduktion för husarbete</p>
+                        </div>
+                    </div>
+                    <div class="rot-amount">
+                        <span class="label">Du sparar</span>
+                        <div class="value">-24,246 SEK</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ====== FINAL PAYMENT ====== -->
+            <div class="bento-card glass final-payment">
+                <div class="final-label">
+                    <div class="final-icon">
+                        <i class="fas fa-receipt"></i>
+                    </div>
+                    <div class="final-text">
+                        <h2>Att betala</h2>
+                        <p>Efter ROT-avdrag • Betalningsvillkor 30 dagar netto</p>
+                    </div>
+                </div>
+                <div>
+                    <span class="final-amount">112,029</span>
+                    <span class="final-currency">SEK</span>
+                </div>
+            </div>
+
+            <!-- ====== FOOTER ====== -->
+            <footer class="quote-footer">
+                <div class="footer-divider"></div>
+                <p>Offerten gäller 30 dagar • Construct Pro • Tel: +46 8 123 4567 • info@constructpro.se</p>
+            </footer>
+
+        </div>
+    </div>
+</body>
+</html>

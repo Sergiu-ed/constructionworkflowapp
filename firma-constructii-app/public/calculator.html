@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Priskonfigurator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .category-header {
+            cursor: pointer;
+        }
+
+        .category-content {
+            transition: max-height 0.3s ease-out;
+            overflow: hidden;
+        }
+
+        .category-content.collapsed {
+            max-height: 0 !important;
+        }
+
+        .editable-cell:hover {
+            background: #f1f5f9;
+            cursor: pointer;
+        }
+
+        .editable-cell:focus {
+            outline: 2px solid #f97316;
+            background: white;
+        }
+
+        .row-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        tr:hover .row-actions {
+            opacity: 1;
+        }
+
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
+        .preset-chip {
+            transition: all 0.2s;
+        }
+
+        .preset-chip:hover {
+            transform: scale(1.05);
+        }
+
+        .checkbox-cell input {
+            width: 18px;
+            height: 18px;
+            accent-color: #f97316;
+            cursor: pointer;
+        }
+
+        .formula-input {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 2px 4px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            width: 100%;
+            margin-top: 2px;
+            color: #64748b;
+        }
+
+        .formula-input:focus {
+            border-color: #3b82f6;
+            outline: none;
+            color: #1e293b;
+            font-weight: bold;
+        }
+
+        .formula-help {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            background: #334155;
+            color: white;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            width: 220px;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .formula-input:focus+.formula-help {
+            display: block;
+        }
+
+        .detail-input {
+            font-size: 12px;
+            padding: 4px 8px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            width: 100%;
+        }
+
+        .detail-label {
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 2px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+    <!-- HEADER -->
+    <header
+        class="bg-gradient-to-r from-slate-800 to-slate-700 text-white py-3 px-6 flex justify-between items-center shadow-lg sticky top-0 z-50">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div id="companyLogo" class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                    <i class="fas fa-hard-hat text-orange-500 text-xl"></i>
+                </div>
+                <div>
+                    <h1 id="companyName" class="text-lg font-bold">Bluebygg Gislaved AB</h1>
+                    <span class="text-slate-300 text-xs">PRISKONFIGURATOR</span>
+                </div>
+            </div>
+        </div>
+        <nav class="flex items-center gap-4">
+            <select id="langSelect" onchange="setLanguage(this.value)"
+                class="bg-slate-600 text-white text-sm rounded px-2 py-1 border border-slate-500">
+                <option value="sv">🇸🇪 SV</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="ro">🇷🇴 RO</option>
+            </select>
+            <a href="index.html" class="hover:text-orange-400 transition"><i class="fas fa-home"></i></a>
+            <a href="calculator.html" class="text-orange-400"><i class="fas fa-calculator"></i></a>
+            <a href="settings.html" class="hover:text-orange-400 transition"><i class="fas fa-cog"></i></a>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="p-6 max-w-[1600px] mx-auto">
+        <!-- TOP CONTROLS -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
+            <!-- Global Dimensions (Col 1-4) -->
+            <div class="lg:col-span-4 bg-white rounded-xl shadow-sm p-4 border border-blue-100 flex flex-col">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <i class="fas fa-ruler-combined text-blue-500"></i> <span
+                        data-i18n="roomDimensions">Rumsdimensioner</span>
+                </h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="length">Längd (L)</label>
+                        <input type="number" id="dimL" step="0.1"
+                            class="w-full px-2 py-1 border rounded bg-slate-100 text-slate-500 cursor-not-allowed"
+                            readonly>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="width">Bredd (B)</label>
+                        <input type="number" id="dimW" step="0.1"
+                            class="w-full px-2 py-1 border rounded bg-slate-100 text-slate-500 cursor-not-allowed"
+                            readonly>
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="height">Höjd (H)</label>
+                        <input type="number" id="dimH" step="0.1"
+                            class="w-full px-2 py-1 border rounded bg-slate-100 text-slate-500 cursor-not-allowed"
+                            readonly>
+                    </div>
+                </div>
+                <!-- Main Calculations -->
+                <div class="grid grid-cols-3 gap-2 mt-4">
+                    <div class="bg-blue-50 p-2 rounded text-center">
+                        <div class="text-[10px] text-slate-500" data-i18n="floor">Golv (G)</div>
+                        <strong id="calcFloor" class="text-blue-700 text-sm">0</strong> <span
+                            class="text-[10px] text-slate-400">m²</span>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded text-center">
+                        <div class="text-[10px] text-slate-500" data-i18n="walls">Vägg (V)</div>
+                        <strong id="calcWalls" class="text-blue-700 text-sm">0</strong> <span
+                            class="text-[10px] text-slate-400">m²</span>
+                    </div>
+                    <div class="bg-blue-50 p-2 rounded text-center">
+                        <div class="text-[10px] text-slate-500" data-i18n="perimeter">Omkrets (O)</div>
+                        <strong id="calcPerim" class="text-blue-700 text-sm">0</strong> <span
+                            class="text-[10px] text-slate-400">m</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Dimensions (Col 5-9) -->
+            <div class="lg:col-span-5 bg-white rounded-xl shadow-sm p-4 border border-slate-100">
+                <h3 class="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm">
+                    <i class="fas fa-puzzle-piece text-orange-500"></i> <span data-i18n="detailsDeductions">Detaljer &
+                        Avdrag</span>
+                </h3>
+                <div class="grid grid-cols-4 gap-x-2 gap-y-3">
+                    <!-- Doors -->
+                    <div class="col-span-2 bg-slate-50 p-2 rounded relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-bold text-slate-600" data-i18n="doors">Dörrar</label>
+                                <span class="text-[10px] text-slate-400">DA: <strong id="calcDA"
+                                        class="text-slate-600">0</strong> m²</span>
+                            </div>
+                            class="hidden"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="doorsContainer" class="space-y-1"></div>
+                    </div>
+
+                    <!-- Windows -->
+                    <div class="col-span-2 bg-slate-50 p-2 rounded relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-bold text-slate-600" data-i18n="windows">Fönster</label>
+                                <span class="text-[10px] text-slate-400">WA: <strong id="calcWA"
+                                        class="text-slate-600">0</strong> m²</span>
+                            </div>
+                            class="hidden"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="winsContainer" class="space-y-1"></div>
+                    </div>
+
+                    <!-- Corners -->
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="innerCorners">Innerhörn (IC)</label>
+                        <input type="number" id="cornIn"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="outerCorners">Ytterhörn (OC)</label>
+                        <input type="number" id="cornOut"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+
+                    <!-- Pipes -->
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="pipe1">Rör 10-20 (P1)</label>
+                        <input type="number" id="pipe1"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="pipe2">Rör 32-55 (P2)</label>
+                        <input type="number" id="pipe2"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="wcPipe">WC Avl. (P3)</label>
+                        <input type="number" id="pipe3"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+                    <div class="col-span-1">
+                        <label class="detail-label" data-i18n="drain">Golvbrunn (FD)</label>
+                        <input type="number" id="drain"
+                            class="detail-input bg-slate-100 text-slate-500 cursor-not-allowed" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings & Action (Col 10-12) -->
+            <div class="lg:col-span-3 bg-white rounded-xl shadow-sm p-4 flex flex-col justify-between">
+                <div>
+                    <div class="mb-3">
+                        <div class="flex items-center justify-between mb-1">
+                            <label class="text-xs text-slate-500 font-bold" data-i18n="hourlyRate">Timpris</label>
+                            <input type="number" id="laborRateInput" value="450"
+                                class="w-16 text-right border rounded px-1 text-sm font-bold">
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs text-slate-500 font-bold" data-i18n="vat">Moms %</label>
+                            <input type="number" id="vatInput" value="25"
+                                class="w-16 text-right border rounded px-1 text-sm font-bold">
+                        </div>
+                        <div class="flex items-center justify-between mt-2">
+                            <label class="text-xs text-slate-500 font-bold"><i
+                                    class="fas fa-truck text-orange-500 mr-1"></i>Transport/km</label>
+                            <input type="number" id="transportCostInput" value="15"
+                                class="w-16 text-right border rounded px-1 text-sm font-bold" oninput="saveData()">
+                        </div>
+                    </div>
+
+                    <div class="relative w-full mb-3">
+                        <i class="fas fa-search absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="searchInput" placeholder="Sök..." data-i18n-placeholder="search"
+                            class="w-full pl-7 pr-2 py-1.5 border border-slate-200 rounded text-sm focus:ring-1 focus:ring-orange-500">
+                    </div>
+                </div>
+
+                <button onclick="addToQuote()"
+                    class="w-full py-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition flex items-center justify-center gap-2 shadow font-bold text-sm">
+                    <i class="fas fa-share-square"></i> <span data-i18n="addToQuote">Lägg till i Offert</span>
+                </button>
+                <button onclick="saveAsQuotePreset()"
+                    class="w-full py-2 mt-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition flex items-center justify-center gap-2 shadow font-bold text-sm">
+                    <i class="fas fa-save"></i> <span data-i18n="saveAsQuotePreset">Spara som mall i Offert</span>
+                </button>
+                <button onclick="openTermsModal()"
+                    class="w-full py-2 mt-2 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition flex items-center justify-center gap-2 shadow-sm font-bold text-sm">
+                    <i class="fas fa-file-contract text-blue-500"></i> <span data-i18n="editTerms">Redigera
+                        Villkor</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-2 overflow-x-auto pb-1" id="presetsContainer">
+                <!-- Presets chips here -->
+            </div>
+            <div class="flex gap-2 shrink-0">
+                <button onclick="addCategory()"
+                    class="text-xs bg-slate-700 text-white px-3 py-1 rounded hover:bg-slate-800 shadow-sm"><i
+                        class="fas fa-plus"></i> <span data-i18n="addCategory">Kategori</span></button>
+            </div>
+        </div>
+
+        <!-- CALCULATOR TABLE -->
+        <div id="categoriesContainer">
+            <!-- Categories will be rendered here -->
+        </div>
+
+    </main>
+
+    <!-- MODALS -->
+    <div id="categoryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Ny kategori</h3>
+            <input type="text" id="categoryNameInput" class="w-full px-4 py-3 border rounded-lg mb-4">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeCategoryModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Avbryt</button>
+                <button onclick="confirmAddCategory()" class="px-4 py-2 bg-orange-500 text-white rounded-lg">Lägg
+                    till</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="presetModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-4">Spara som mall</h3>
+            <input type="text" id="presetNameInput" class="w-full px-4 py-3 border rounded-lg mb-4">
+            <div class="flex justify-end gap-2">
+                <button onclick="closePresetModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Avbryt</button>
+                <button onclick="confirmSavePreset()"
+                    class="px-4 py-2 bg-orange-500 text-white rounded-lg">Spara</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quote Preset Modal -->
+    <div id="quotePresetModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold mb-2" data-i18n="saveAsQuotePreset">Spara som mall i Offert</h3>
+            <p class="text-sm text-slate-500 mb-4">Ange ett namn för mallen (t.ex. "Badrumsrenovering")</p>
+            <input type="text" id="quotePresetNameInput" class="w-full px-4 py-3 border rounded-lg mb-4"
+                placeholder="Mallnamn...">
+            <div class="flex justify-end gap-2">
+                <button onclick="closeQuotePresetModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Avbryt</button>
+                <button onclick="confirmSaveQuotePreset()"
+                    class="px-4 py-2 bg-green-500 text-white rounded-lg font-bold">Spara</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-2xl">
+            <h3 class="text-lg font-bold mb-2" data-i18n="editTerms">Redigera Villkor</h3>
+            <p class="text-sm text-slate-500 mb-4">Ange anpassade villkor som ska visas på offerten.</p>
+            <textarea id="termsInput" class="w-full px-4 py-3 border rounded-lg mb-4 h-64 font-mono text-sm"
+                placeholder="Skriv dina villkor här..."></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeTermsModal()" class="px-4 py-2 bg-slate-100 rounded-lg">Avbryt</button>
+                <button onclick="saveTerms()" class="px-4 py-2 bg-blue-500 text-white rounded-lg font-bold">Spara
+                    Villkor</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION -->
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl translate-y-20 transition-transform duration-300 flex items-center gap-3">
+        <i class="fas fa-check-circle text-green-400"></i>
+        <span id="toastMsg">Action completed</span>
+    </div>
+
+    <!-- DELETE CATEGORY CONFIRMATION MODAL -->
+    <div id="deleteCategoryModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4 text-red-600 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i> Radera kategori?
+            </h3>
+            <p class="text-slate-600 mb-6">Denna åtgärd kan inte ångras. Alla rader i kategorin kommer att tas bort.</p>
+            <input type="hidden" id="deleteCategoryId">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeDeleteCategoryModal()"
+                    class="px-6 py-3 bg-slate-200 rounded-lg font-bold hover:bg-slate-300 transition">Avbryt</button>
+                <button onclick="confirmDeleteCategory()"
+                    class="px-6 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition">Radera</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== LANGUAGE =====
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+
+        const uiTranslations = {
+            sv: {
+                roomDimensions: 'Rumsdimensioner',
+                detailsDeductions: 'Detaljer & Avdrag',
+                doors: 'Dörrar', windows: 'Fönster',
+                hourlyRate: 'Timpris', vat: 'Moms', search: 'Sök...',
+                length: 'Längd (L)', width: 'Bredd (B)', height: 'Höjd (H)',
+                floor: 'Golv (G)', walls: 'Vägg (V)', perimeter: 'Omkrets (O)',
+                doorH: 'Dörr H', doorW: 'Dörr B', winH: 'Fönster H', winW: 'Fönster B',
+                innerCorners: 'Innerhörn (IC)', outerCorners: 'Ytterhörn (OC)',
+                pipe1: 'Rör 10-20 (P1)', pipe2: 'Rör 32-55 (P2)', wcPipe: 'WC Avl. (P3)', drain: 'Golvbrunn (FD)',
+                addToQuote: 'Lägg till i Offert', saveTemplate: 'Spara mall', addCategory: 'Kategori',
+                material: 'Material', price: 'Pris', unit: 'Ehn', time: 'Tid', quantity: 'Mängd', total: 'Totalt',
+                description: 'Beskrivning', workSuffix: '(Arbete)', workLabel: 'Arbete',
+                addRow: 'Lägg till rad', newCategory: 'Ny kategori', saveAsTemplate: 'Spara som mall',
+                cancel: 'Avbryt', add: 'Lägg till', save: 'Spara',
+                noItemsSelected: 'Inga artiklar valda!', itemsSaved: 'artiklar sparade till Offert!', goToQuote: 'Gå till offerten?',
+                deleteCategory: 'Radera kategori?', copyLabel: '(kopia)', saveAsQuotePreset: 'Spara som mall i Offert', presetSaved: 'Mall sparad!',
+                editTerms: 'Redigera Villkor', deleteRow: 'Radera rad'
+            },
+            en: {
+                roomDimensions: 'Room Dimensions',
+                detailsDeductions: 'Details & Deductions',
+                doors: 'Doors', windows: 'Windows',
+                hourlyRate: 'Hourly Rate', vat: 'VAT', search: 'Search...',
+                length: 'Length (L)', width: 'Width (B)', height: 'Height (H)',
+                floor: 'Floor (G)', walls: 'Wall (V)', perimeter: 'Perimeter (O)',
+                doorH: 'Door H', doorW: 'Door W', winH: 'Window H', winW: 'Window W',
+                innerCorners: 'Inner Corners (IC)', outerCorners: 'Outer Corners (OC)',
+                pipe1: 'Pipe 10-20 (P1)', pipe2: 'Pipe 32-55 (P2)', wcPipe: 'WC Drain (P3)', drain: 'Floor Drain (FD)',
+                addToQuote: 'Add to Quote', saveTemplate: 'Save template', addCategory: 'Category',
+                material: 'Material', price: 'Price', unit: 'Unit', time: 'Time', quantity: 'Qty', total: 'Total',
+                description: 'Description', workSuffix: '(Labor)', workLabel: 'Labor',
+                addRow: 'Add row', newCategory: 'New category', saveAsTemplate: 'Save as template',
+                cancel: 'Cancel', add: 'Add', save: 'Save',
+                noItemsSelected: 'No items selected!', itemsSaved: 'items saved to Quote!', goToQuote: 'Go to quote?',
+                deleteCategory: 'Delete category?', copyLabel: '(copy)', saveAsQuotePreset: 'Save as Quote Preset', presetSaved: 'Preset saved!',
+                editTerms: 'Edit Terms', deleteRow: 'Delete row'
+            },
+            ro: {
+                roomDimensions: 'Dimensiuni Cameră',
+                detailsDeductions: 'Detalii & Deduceri',
+                doors: 'Uși', windows: 'Ferestre',
+                hourlyRate: 'Tarif Orar', vat: 'TVA', search: 'Caută...',
+                length: 'Lungime (L)', width: 'Lățime (B)', height: 'Înălțime (H)',
+                floor: 'Podea (G)', walls: 'Perete (V)', perimeter: 'Perimetru (O)',
+                doorH: 'Ușă H', doorW: 'Ușă L', winH: 'Fereastră H', winW: 'Fereastră L',
+                innerCorners: 'Colțuri Int. (IC)', outerCorners: 'Colțuri Ext. (OC)',
+                pipe1: 'Țeavă 10-20 (P1)', pipe2: 'Țeavă 32-55 (P2)', wcPipe: 'Scurgere WC (P3)', drain: 'Sifon Podea (FD)',
+                addToQuote: 'Adaugă la Ofertă', saveTemplate: 'Salvează șablon', addCategory: 'Categorie',
+                material: 'Material', price: 'Preț', unit: 'Un.', time: 'Timp', quantity: 'Cant.', total: 'Total',
+                description: 'Descriere', workSuffix: '(Manoperă)', workLabel: 'Manoperă',
+                addRow: 'Adaugă rând', newCategory: 'Categorie nouă', saveAsTemplate: 'Salvează ca șablon',
+                cancel: 'Anulează', add: 'Adaugă', save: 'Salvează',
+                noItemsSelected: 'Niciun articol selectat!', itemsSaved: 'articole salvate în Ofertă!', goToQuote: 'Mergi la ofertă?',
+                deleteCategory: 'Șterge categoria?', copyLabel: '(copie)', saveAsQuotePreset: 'Salvează ca șablon în Ofertă', presetSaved: 'Șablon salvat!',
+                editTerms: 'Editează Termeni', deleteRow: 'Șterge rând'
+            }
+        };
+
+        function getT() { return uiTranslations[currentLang] || uiTranslations.sv; }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('constructPro_lang', lang);
+            applyLanguage();
+            render();
+        }
+
+        function applyLanguage() {
+            const t = getT();
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key]) el.textContent = t[key];
+            });
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.dataset.i18nPlaceholder;
+                if (t[key]) el.placeholder = t[key];
+            });
+            document.getElementById('langSelect').value = currentLang;
+        }
+
+        // ===== DATA =====
+        let calculatorData = {
+            laborRate: 450,
+            vatPercent: 25,
+            dimensions: { l: 0, w: 0, h: 0 },
+            details: {
+                doors: [],
+                windows: [],
+                corn: { i: 0, o: 0 },
+                pipes: { p1: 0, p2: 0, p3: 0, fd: 0 }
+            },
+            categories: []
+        };
+        let presets = [];
+        let calculatedDims = { floor: 0, walls: 0, perim: 0, da: 0, wa: 0 };
+        let settings = {};
+
+        // ===== LOAD/SAVE =====
+        function loadData() {
+            try {
+                const savedSettings = localStorage.getItem('constructPro_settings');
+                if (savedSettings) {
+                    try { settings = JSON.parse(savedSettings); } catch (e) { settings = {}; }
+                }
+
+                const saved = localStorage.getItem('constructPro_calculator');
+                if (saved) {
+                    calculatorData = JSON.parse(saved);
+                    // Migration
+                    if (!calculatorData.categories || calculatorData.categories.length === 0) calculatorData.categories = getDefaultCategories();
+                    if (!calculatorData.dimensions) calculatorData.dimensions = { l: 0, w: 0, h: 0 };
+
+                    // Detail initialization and migration
+                    if (!calculatorData.details) calculatorData.details = { doors: [], windows: [], corn: { i: 0, o: 0 }, pipes: { p1: 0, p2: 0, p3: 0, fd: 0 } };
+
+                    // Migrate single door/win to array if needed
+                    if (calculatorData.details.door) {
+                        if (calculatorData.details.door.h || calculatorData.details.door.w) {
+                            calculatorData.details.doors = [{ h: calculatorData.details.door.h, w: calculatorData.details.door.w }];
+                        } else {
+                            calculatorData.details.doors = [];
+                        }
+                        delete calculatorData.details.door;
+                    }
+                    if (!calculatorData.details.doors) calculatorData.details.doors = [];
+
+                    if (calculatorData.details.win) {
+                        if (calculatorData.details.win.h || calculatorData.details.win.w) {
+                            calculatorData.details.windows = [{ h: calculatorData.details.win.h, w: calculatorData.details.win.w }];
+                        } else {
+                            calculatorData.details.windows = [];
+                        }
+                        delete calculatorData.details.win;
+                    }
+                    if (!calculatorData.details.windows) calculatorData.details.windows = [];
+
+                    if (!calculatorData.terms) calculatorData.terms = '';
+
+                    // Migration for split rows
+                    calculatorData.categories.forEach(cat => {
+                        cat.items.forEach(item => {
+                            if (item.selectedLabor === undefined) item.selectedLabor = item.selected || false;
+                            if (item.selectedMaterial === undefined) item.selectedMaterial = (item.selected && (item.includeMaterial !== false)) || false;
+
+                            // Migration: Strip legacy suffixes from material name
+                            if (item.material) {
+                                item.material = item.material
+                                    .replace(' (Arbete)', '')
+                                    .replace(' (Labor)', '')
+                                    .replace(' (Manoperă)', '')
+                                    .trim();
+                            }
+                        });
+                    });
+                } else {
+                    calculatorData = {
+                        laborRate: 450, vatPercent: 25,
+                        dimensions: { l: 0, w: 0, h: 0 },
+                        details: { doors: [], windows: [], corn: { i: 0, o: 0 }, pipes: { p1: 0, p2: 0, p3: 0, fd: 0 } },
+                        categories: getDefaultCategories()
+                    };
+                }
+
+                // FORCE CLEAN SESSION: Reset all quantities and dimensions on every load
+                // We keep the structure (categories/items) but wipe the state.
+                if (calculatorData.categories) {
+                    calculatorData.categories.forEach(cat => {
+                        cat.items.forEach(item => {
+                            item.quantity = 0;
+                            // Optionally reset selection if desired, but user might want defaults?
+                            // item.selectedLabor = false; 
+                            // item.selectedMaterial = false;
+                        });
+                    });
+                }
+                calculatorData.dimensions = { l: 0, w: 0, h: 0 };
+                calculatorData.details = { doors: [], windows: [], corn: { i: 0, o: 0 }, pipes: { p1: 0, p2: 0, p3: 0, fd: 0 } };
+
+                const savedPresets = localStorage.getItem('constructPro_presets');
+                if (savedPresets) presets = JSON.parse(savedPresets);
+            } catch (e) {
+                console.error(e);
+                calculatorData = { categories: getDefaultCategories() };
+            }
+
+            // UI Init
+            document.getElementById('laborRateInput').value = calculatorData.laborRate || 450;
+            document.getElementById('vatInput').value = calculatorData.vatPercent || 25;
+            document.getElementById('transportCostInput').value = calculatorData.transportCostPerKm || 15;
+
+            // Dims - Read from Checklist if available, otherwise start empty
+            const ofertaDimsJson = localStorage.getItem('constructPro_oferta_dimensions');
+            let dims = { l: 0, w: 0, h: 0 };
+            let details = { doors: [], windows: [], corn: { i: 0, o: 0 }, pipes: { p1: 0, p2: 0, p3: 0, fd: 0 } };
+
+            if (ofertaDimsJson) {
+                try {
+                    const ofertaData = JSON.parse(ofertaDimsJson);
+                    dims = { l: ofertaData.l || 0, w: ofertaData.w || 0, h: ofertaData.h || 0 };
+                    if (ofertaData.details) {
+                        details = {
+                            corn: ofertaData.details.corn || { i: 0, o: 0 },
+                            pipes: ofertaData.details.pipes || { p1: 0, p2: 0, p3: 0, fd: 0 },
+                            doors: ofertaData.details.doors || [],
+                            windows: ofertaData.details.windows || []
+                        };
+                    }
+                } catch (e) { /* ignore parse errors */ }
+            }
+
+            calculatorData.dimensions = dims;
+            calculatorData.details = details;
+
+            // Show empty string if 0, otherwise show the value
+            document.getElementById('dimL').value = dims.l || '';
+            document.getElementById('dimW').value = dims.w || '';
+            document.getElementById('dimH').value = dims.h || '';
+
+            // Details
+            document.getElementById('cornIn').value = details.corn?.i || '';
+            document.getElementById('cornOut').value = details.corn?.o || '';
+            document.getElementById('pipe1').value = details.pipes?.p1 || '';
+            document.getElementById('pipe2').value = details.pipes?.p2 || '';
+            document.getElementById('pipe3').value = details.pipes?.p3 || '';
+            document.getElementById('drain').value = details.pipes?.fd || '';
+
+            // Render Dynamic Detail Lists
+            renderDimensionDetails();
+            updateDimensions(false); // Don't auto-save - Checklist is source of truth
+        }
+
+        // Real-time Sync Listener
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'constructPro_oferta_dimensions' && e.newValue) {
+                try {
+                    const d = JSON.parse(e.newValue);
+                    if (d.timestamp && calculatorData.dimensions) {
+                        // prevent echo loops if needed, but timestamp helps
+                    }
+
+                    // Update Calculator Dims from Storage
+                    const dims = { l: d.l || 0, w: d.w || 0, h: d.h || 0 };
+                    const details = {
+                        corn: d.details?.corn || { i: 0, o: 0 },
+                        pipes: d.details?.pipes || { p1: 0, p2: 0, p3: 0, fd: 0 },
+                        doors: d.details?.doors || [],
+                        windows: d.details?.windows || []
+                    };
+
+                    calculatorData.dimensions = dims;
+                    calculatorData.details = details;
+
+                    document.getElementById('dimL').value = dims.l || '';
+                    document.getElementById('dimW').value = dims.w || '';
+                    document.getElementById('dimH').value = dims.h || '';
+
+                    document.getElementById('cornIn').value = details.corn.i || '';
+                    document.getElementById('cornOut').value = details.corn.o || '';
+                    document.getElementById('pipe1').value = details.pipes.p1 || '';
+                    document.getElementById('pipe2').value = details.pipes.p2 || '';
+                    document.getElementById('pipe3').value = details.pipes.p3 || '';
+                    document.getElementById('drain').value = details.pipes.fd || '';
+
+                    renderDimensionDetails();
+                    updateDimensions(false); // Update calcs but don't save back immediately to avoid loop
+                } catch (err) { console.error(err); }
+            }
+        });
+
+        function getDefaultCategories() {
+            return [
+                {
+                    id: 'cat-riv', name: '2. Rivning', collapsed: true,
+                    items: [
+                        { id: 'i-r1', selected: false, quantity: 0, formula: 'G', material: 'Parkett rivning', materialPrice: 0, unit: 'kvm', time: 0.2 },
+                        { id: 'i-r2', selected: false, quantity: 0, formula: 'G', material: 'Plastmatta golv rivning', materialPrice: 0, unit: 'kvm', time: 0.25 },
+                        { id: 'i-r3', selected: false, quantity: 0, formula: 'V', material: 'Kakel/klinker vägg rivning', materialPrice: 0, unit: 'kvm', time: 0.4 },
+                        { id: 'i-r4', selected: false, quantity: 0, formula: 'V', material: 'Tätskikt rivning', materialPrice: 0, unit: 'kvm', time: 0.2 },
+                        { id: 'i-r5', selected: false, quantity: 1, formula: '1', material: 'Dörrfoder rivning', materialPrice: 0, unit: 'st', time: 0.3 }
+                    ]
+                },
+                {
+                    id: 'cat-for', name: '3. Förarbete', collapsed: false,
+                    items: [
+                        { id: 'i-f1', selected: false, quantity: 0, formula: 'G', material: '22 golv spånskiva', materialPrice: 125, unit: 'kvm', time: 0.35 },
+                        { id: 'i-f2', selected: false, quantity: 0, formula: 'V', material: '11 OSB spånskiva (B=900)', materialPrice: 85, unit: 'kvm', time: 0.25 },
+                        { id: 'i-f3', selected: false, quantity: 0, formula: 'V', material: '13 gipsskiva (B=900)', materialPrice: 65, unit: 'kvm', time: 0.25 },
+                        { id: 'i-f4', selected: false, quantity: 0, formula: 'V', material: 'Reglar 45x70 c600', materialPrice: 35, unit: 'm', time: 0.15 },
+                        { id: 'i-f5', selected: false, quantity: 0, formula: 'G', material: 'Flytspackling', materialPrice: 45, unit: 'kvm', time: 0.4 }
+                    ]
+                },
+                {
+                    id: 'cat-tat', name: '4. Tätskikt', collapsed: false,
+                    items: [
+                        { id: 'i-t1', selected: false, quantity: 0, formula: 'G + V', material: 'PCI Gisogrund', materialPrice: 55, unit: 'kvm', time: 0.1 },
+                        { id: 'i-t2', selected: false, quantity: 0, formula: '(G + V) * 1.1', material: 'PCI LASTOGUM', materialPrice: 125, unit: 'kvm', time: 0.3 },
+                        { id: 'i-t3', selected: false, quantity: 0, formula: 'IC + OC', material: 'Tätremsa/Hörn', materialPrice: 25, unit: 'm', time: 0.1 },
+                        { id: 'i-t4', selected: false, quantity: 0, formula: 'P1 + P2 + P3 + FD', material: 'Manschetter', materialPrice: 45, unit: 'st', time: 0.1 }
+                    ]
+                },
+                {
+                    id: 'cat-kak', name: '5. Kakel/Klinker', collapsed: true,
+                    items: [
+                        { id: 'i-k1', selected: false, quantity: 0, formula: 'V * 1.1', material: 'Kakel Standard', materialPrice: 350, unit: 'kvm', time: 1.2 },
+                        { id: 'i-k2', selected: false, quantity: 0, formula: 'G * 1.1', material: 'Klinker Standard', materialPrice: 450, unit: 'kvm', time: 1.4 },
+                        { id: 'i-k3', selected: false, quantity: 0, formula: 'G + V', material: 'Fogmassa', materialPrice: 20, unit: 'kvm', time: 0.3 }
+                    ]
+                },
+                {
+                    id: 'cat-mon', name: '6. Montage', collapsed: true,
+                    items: [
+                        { id: 'i-m1', selected: false, quantity: 1, formula: '1', material: 'Kommod 60cm', materialPrice: 4500, unit: 'st', time: 2.0 },
+                        { id: 'i-m2', selected: false, quantity: 1, formula: '1', material: 'Spegelskåp', materialPrice: 2500, unit: 'st', time: 1.5 },
+                        { id: 'i-m3', selected: false, quantity: 1, formula: '1', material: 'Duschväggar', materialPrice: 3500, unit: 'st', time: 2.5 }
+                    ]
+                }
+            ];
+        }
+
+        function saveData() {
+            // Read settings from inputs before saving
+            calculatorData.laborRate = parseFloat(document.getElementById('laborRateInput').value) || 450;
+            calculatorData.vatPercent = parseFloat(document.getElementById('vatInput').value) || 25;
+            calculatorData.transportCostPerKm = parseFloat(document.getElementById('transportCostInput').value) || 15;
+
+            localStorage.setItem('constructPro_calculator', JSON.stringify(calculatorData));
+        }
+        function savePresets() {
+            localStorage.setItem('constructPro_presets', JSON.stringify(presets));
+        }
+
+        // ===== DIMENSIONS & FORMULA ENGINE =====
+        function updateDimensions(save = true) {
+            // Global
+            const l = parseFloat(document.getElementById('dimL').value) || 0;
+            const w = parseFloat(document.getElementById('dimW').value) || 0;
+            const h = parseFloat(document.getElementById('dimH').value) || 0;
+
+            const cornI = parseFloat(document.getElementById('cornIn').value) || 0;
+            const cornO = parseFloat(document.getElementById('cornOut').value) || 0;
+
+            const p1 = parseFloat(document.getElementById('pipe1').value) || 0;
+            const p2 = parseFloat(document.getElementById('pipe2').value) || 0;
+            const p3 = parseFloat(document.getElementById('pipe3').value) || 0;
+            const fd = parseFloat(document.getElementById('drain').value) || 0;
+
+            calculatorData.dimensions = { l, w, h };
+            // Update static details in data
+            if (!calculatorData.details) calculatorData.details = { doors: [], windows: [] };
+            calculatorData.details.corn = { i: cornI, o: cornO };
+            calculatorData.details.pipes = { p1: p1, p2: p2, p3: p3, fd: fd };
+
+            // Note: calculatorData.details.doors/windows are updated directly by inputs now
+
+            // Calc derived
+            calculatedDims.floor = parseFloat((l * w).toFixed(2));
+            calculatedDims.walls = parseFloat(((l + w) * 2 * h).toFixed(2));
+            calculatedDims.perim = parseFloat(((l + w) * 2).toFixed(2));
+
+            // Sum up Doors Area (DA)
+            let totalDoorArea = 0;
+            calculatorData.details.doors.forEach(d => {
+                totalDoorArea += (d.h || 0) * (d.w || 0);
+            });
+            calculatedDims.da = parseFloat(totalDoorArea.toFixed(2));
+
+            // Sum up Windows Area (WA)
+            let totalWinArea = 0;
+            calculatorData.details.windows.forEach(w => {
+                totalWinArea += (w.h || 0) * (w.w || 0);
+            });
+            calculatedDims.wa = parseFloat(totalWinArea.toFixed(2));
+
+            // Update UI
+            document.getElementById('calcFloor').innerText = calculatedDims.floor;
+            document.getElementById('calcWalls').innerText = calculatedDims.walls;
+            document.getElementById('calcPerim').innerText = calculatedDims.perim;
+            document.getElementById('calcDA').innerText = calculatedDims.da;
+            document.getElementById('calcWA').innerText = calculatedDims.wa;
+
+            // Recalculate ALL items
+            calculatorData.categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (item.formula) {
+                        try {
+                            item.quantity = evaluateFormula(item.formula);
+                        } catch (e) { /* ignore */ }
+                    }
+                });
+            });
+
+            if (save) {
+                saveData();
+                // MASTER-SLAVE: Calculator NEVER writes to shared dimensions automatically
+                // It only consumes them.
+            }
+            render();
+        }
+
+        // ===== DETAIL MANAGEMENT =====
+        function renderDimensionDetails() {
+            // Render Doors
+            const doorsContainer = document.getElementById('doorsContainer');
+            if (doorsContainer) {
+                doorsContainer.innerHTML = calculatorData.details.doors.map((d, i) => `
+                    <div class="flex items-center gap-1 mb-1">
+                        <div class="grid grid-cols-2 gap-1 flex-1">
+                            <input type="number" placeholder="H" value="${d.h || ''}" oninput="updateDetailItem('doors', ${i}, 'h', this.value)" class="detail-input text-center text-xs px-1 border rounded w-full">
+                            <input type="number" placeholder="B" value="${d.w || ''}" oninput="updateDetailItem('doors', ${i}, 'w', this.value)" class="detail-input text-center text-xs px-1 border rounded w-full">
+                        </div>
+                        <button onclick="removeDetailItem('doors', ${i})" class="text-slate-300 hover:text-red-500 w-5"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('');
+            }
+
+            // Render Windows
+            const winsContainer = document.getElementById('winsContainer');
+            if (winsContainer) {
+                winsContainer.innerHTML = calculatorData.details.windows.map((w, i) => `
+                    <div class="flex items-center gap-1 mb-1">
+                        <div class="grid grid-cols-2 gap-1 flex-1">
+                            <input type="number" placeholder="H" value="${w.h || ''}" oninput="updateDetailItem('windows', ${i}, 'h', this.value)" class="detail-input text-center text-xs px-1 border rounded w-full">
+                            <input type="number" placeholder="B" value="${w.w || ''}" oninput="updateDetailItem('windows', ${i}, 'w', this.value)" class="detail-input text-center text-xs px-1 border rounded w-full">
+                        </div>
+                        <button onclick="removeDetailItem('windows', ${i})" class="text-slate-300 hover:text-red-500 w-5"><i class="fas fa-times"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addDetailItem(type) {
+            if (!calculatorData.details[type]) calculatorData.details[type] = [];
+            calculatorData.details[type].push({ h: 2.1, w: 0.9 }); // Default
+            renderDimensionDetails();
+            updateDimensions();
+        }
+
+        function removeDetailItem(type, index) {
+            calculatorData.details[type].splice(index, 1);
+            renderDimensionDetails();
+            updateDimensions();
+        }
+
+        function updateDetailItem(type, index, field, value) {
+            calculatorData.details[type][index][field] = parseFloat(value) || 0;
+            updateDimensions();
+        }
+
+        function evaluateFormula(expression) {
+            if (!expression) return 0;
+            let expr = expression.toUpperCase();
+
+            const L = calculatorData.dimensions.l || 0;
+            const W = calculatorData.dimensions.w || 0; // Alias B
+            const H = calculatorData.dimensions.h || 0;
+            const G = calculatedDims.floor;
+            const V = calculatedDims.walls;
+            const O = calculatedDims.perim;
+
+            const DA = calculatedDims.da;
+            const WA = calculatedDims.wa;
+            const IC = calculatorData.details.corn.i || 0;
+            const OC = calculatorData.details.corn.o || 0;
+            const P1 = calculatorData.details.pipes.p1 || 0;
+            const P2 = calculatorData.details.pipes.p2 || 0;
+            const P3 = calculatorData.details.pipes.p3 || 0;
+            const FD = calculatorData.details.pipes.fd || 0;
+
+            // Replacements
+            // Sort keys by length desc to avoid replacing partials (e.g. replace variable 'P1' not 'P' in 'P1')
+            // But simple replace is usually fine if we have distinct vars.
+            // Using regex word boundaries for safety.
+
+            const vars = {
+                'FLOOR': G, 'GOLV': G, 'WALL': V, 'VÄGG': V, 'PERIM': O, 'OMKRETS': O,
+                'L': L, 'W': W, 'B': W, 'H': H, 'G': G, 'V': V, 'O': O,
+                'DA': DA, 'WA': WA, 'IC': IC, 'OC': OC,
+                'P1': P1, 'P2': P2, 'P3': P3, 'FD': FD
+            };
+
+            // Replace known vars with values
+            for (const [key, val] of Object.entries(vars)) {
+                const regex = new RegExp(`\\b${key}\\b`, 'g');
+                expr = expr.replace(regex, val);
+            }
+
+            // Eval safe-ish
+            if (/^[0-9\.\+\-\*\/\(\)\s]*$/.test(expr)) {
+                try {
+                    return parseFloat(eval(expr).toFixed(2));
+                } catch (e) { return 0; }
+            }
+            return 0;
+        }
+
+        function updateItemFormula(catId, itemId, formula) {
+            const cat = calculatorData.categories.find(c => c.id === catId);
+            const item = cat.items.find(i => i.id === itemId);
+            if (item) {
+                item.formula = formula;
+                item.quantity = evaluateFormula(formula);
+                saveData(); render();
+            }
+        }
+
+        // ===== RENDER =====
+        function render() {
+            const t = getT();
+            const container = document.getElementById('categoriesContainer');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            container.innerHTML = calculatorData.categories.map(category => {
+                const filteredItems = category.items.filter(item =>
+                    item.material.toLowerCase().includes(searchTerm)
+                );
+
+                if (searchTerm && filteredItems.length === 0) return '';
+
+                return `
+                    <div class="bg-white rounded-xl shadow-sm mb-4 overflow-hidden">
+                        <div class="category-header bg-slate-50 px-4 py-3 flex justify-between items-center border-b" onclick="toggleCategory('${category.id}')">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-chevron-${category.collapsed ? 'right' : 'down'} text-slate-400"></i>
+                                <h3 class="font-bold text-slate-700" ondblclick="event.stopPropagation(); editCategoryName('${category.id}')">${category.name}</h3>
+                                <span class="text-xs text-slate-400">(${category.items.length})</span>
+                            </div>
+                            <button onclick="event.stopPropagation(); deleteCategory('${category.id}')" title="${t.deleteCategory}" class="text-red-400 hover:text-red-600 opacity-100 transition px-2"><i class="fas fa-trash"></i></button>
+                        </div>
+                        
+                        <div class="category-content ${category.collapsed ? 'collapsed' : ''}" style="max-height: ${category.collapsed ? '0' : '2000px'}">
+                            <table class="w-full text-sm table-fixed">
+                                <thead class="bg-slate-50 text-slate-600 border-b text-xs uppercase">
+                                    <tr>
+                                        <th class="w-10 py-3 px-2"><i class="fas fa-check-square"></i></th>
+                                        <th class="py-3 text-left px-3">${t.description}</th>
+                                        <th class="w-24 py-3 text-right px-3">${t.price}</th>
+                                        <th class="w-20 py-3 text-center px-2">${t.unit}</th>
+                                        <th class="w-20 py-3 text-right px-2">${t.time}</th>
+                                        <th class="w-32 py-3 text-center px-2 bg-blue-50">${t.quantity}</th> 
+                                        <th class="w-28 py-3 text-right px-3 bg-orange-50">${t.total}</th>
+                                        <th class="w-12 py-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${(searchTerm ? filteredItems : category.items).map(item => renderRow(category.id, item)).join('')}
+                                </tbody>
+                            </table>
+                            <div class="p-3 border-t bg-slate-50">
+                                <button onclick="addRow('${category.id}')" class="text-slate-500 hover:text-orange-500 text-xs font-bold flex items-center gap-2">
+                                    <i class="fas fa-plus-circle"></i> ${t.addRow}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderPresets();
+
+            // SYNC: Broadcast totals to Checklist
+            broadcastTotals();
+        }
+
+        function renderRow(categoryId, item) {
+            const t = getT();
+            const calcs = calculateItem(item);
+
+            // Clean up old material names if they accidentally saved the suffix
+            // This is a view-time cleanup, actual data fix would be better in migration but this works
+            const cleanMaterial = item.material ? item.material.replace(' (Arbete)', '').replace(' (Labor)', '').replace(' (Manoperă)', '') : '';
+
+            return `
+                <!-- Labor Row -->
+                <tr class="border-t-2 border-slate-200 hover:bg-slate-50 transition group" data-item-id="${item.id}-labor">
+                    <td class="text-center checkbox-cell py-3 px-2">
+                        <input type="checkbox" class="w-5 h-5 cursor-pointer" ${item.selectedLabor ? 'checked' : ''} onchange="updateItem('${categoryId}', '${item.id}', 'selectedLabor', this.checked)">
+                    </td>
+                    <td class="px-3 py-3">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-hammer text-orange-500 text-lg"></i>
+                            <div class="flex items-center w-full">
+                                 <input type="text" value="${cleanMaterial}" onchange="updateItem('${categoryId}', '${item.id}', 'material', this.value)"
+                                    class="w-full bg-white border border-slate-200 rounded px-2 py-1 font-medium text-slate-700 focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                                 <span class="text-sm text-orange-500 font-medium whitespace-nowrap ml-2 select-none">${t.workSuffix}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 text-right text-slate-500 font-medium">
+                        ${calculatorData.laborRate} kr/t
+                    </td>
+                    <td class="px-3 py-3">
+                        <input type="text" value="${item.unit}" onchange="updateItem('${categoryId}', '${item.id}', 'unit', this.value)"
+                            class="w-full text-center bg-white border border-slate-200 rounded px-2 py-1 text-slate-600 focus:ring-2 focus:ring-orange-500">
+                    </td>
+                    <td class="px-3 py-3">
+                        <input type="number" value="${item.time}" step="0.01"
+                            onchange="updateItem('${categoryId}', '${item.id}', 'time', parseFloat(this.value))"
+                            class="w-full text-right bg-white border border-slate-200 rounded px-2 py-1 text-slate-700 font-bold focus:ring-2 focus:ring-orange-500">
+                    </td>
+                    <td class="px-3 py-3 bg-blue-50">
+                        <div class="flex items-center justify-center gap-2">
+                            <input type="text" value="${item.formula || ''}" placeholder="v" 
+                                onchange="updateItemFormula('${categoryId}', '${item.id}', this.value)"
+                                class="w-24 text-center bg-white border border-blue-300 rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500 text-slate-600 font-mono">
+                            <div class="w-14 text-center font-bold text-blue-700 text-lg">${item.quantity || 0}</div>
+                        </div>
+                    </td>
+                    <td class="px-3 py-3 text-right font-bold text-slate-800 text-lg bg-orange-50">
+                        ${Math.round(calcs.laborTotal).toLocaleString()}
+                    </td>
+                    <td class="text-center px-2">
+                        <button onclick="deleteRow('${categoryId}', '${item.id}')" title="${t.deleteRow}" class="text-red-400 hover:text-red-600 transition p-1"><i class="fas fa-trash-alt text-lg"></i></button>
+                    </td>
+                </tr>
+
+                <!-- Material Row -->
+                <tr class="border-b-2 border-slate-200 hover:bg-slate-50 transition group" data-item-id="${item.id}-material">
+                    <td class="text-center checkbox-cell py-3 px-2">
+                        <input type="checkbox" class="w-5 h-5 cursor-pointer" ${item.selectedMaterial ? 'checked' : ''} onchange="updateItem('${categoryId}', '${item.id}', 'selectedMaterial', this.checked)">
+                    </td>
+                    <td class="px-3 py-3">
+                        <div class="flex items-center gap-3">
+                            <i class="fas fa-cube text-blue-500 text-lg"></i>
+                            <span class="text-base text-slate-600 font-medium">${t.material}</span>
+                        </div>
+                    </td>
+                    <td class="px-3 py-3">
+                        <input type="number" value="${item.materialPrice}" step="0.01"
+                            onchange="updateItem('${categoryId}', '${item.id}', 'materialPrice', parseFloat(this.value))"
+                            class="w-full bg-white border border-slate-200 rounded text-right px-2 py-1 text-slate-700 font-bold focus:ring-2 focus:ring-orange-500">
+                    </td>
+                    <td class="px-3 py-3 text-center text-slate-500 font-medium">
+                        ${item.unit}
+                    </td>
+                    <td class="px-3 py-3 text-right text-slate-400">
+                        -
+                    </td>
+                    <td class="px-3 py-3 bg-blue-50 text-center text-blue-700 font-bold text-lg">
+                        ${item.quantity || 0}
+                    </td>
+                    <td class="px-3 py-3 text-right font-bold text-slate-800 text-lg bg-orange-50">
+                        ${Math.round(calcs.materialTotal).toLocaleString()}
+                    </td>
+                    <td class="text-center px-2"></td>
+                </tr>
+            `;
+        }
+
+        // ===== SYNC: Broadcast Totals to Checklist =====
+        function broadcastTotals() {
+            let totalLabor = 0;
+            let totalMaterial = 0;
+
+            calculatorData.categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (item.selected) {
+                        const calcs = calculateItem(item);
+                        totalLabor += calcs.laborTotal;
+                        totalMaterial += calcs.materialTotal;
+                    }
+                });
+            });
+
+            const grandTotal = totalLabor + totalMaterial;
+
+            // Save to localStorage for Checklist to read
+            localStorage.setItem('constructPro_calculator_totals', JSON.stringify({
+                labor: totalLabor,
+                material: totalMaterial,
+                total: grandTotal,
+                timestamp: Date.now()
+            }));
+        }
+
+        // ===== CALCULATION =====
+        // ===== CALCULATION =====
+        function calculateItem(item) {
+            const laborRate = calculatorData.laborRate;
+            const qty = item.quantity || 0;
+
+            // Get overhead settings (default 252%)
+            const laborOverhead = settings.costs?.laborOverhead ?? 252;
+            const laborMultiplier = 1 + (laborOverhead / 100);
+
+            // Apply overhead to labor cost
+            const laborPerUnit = item.time * laborRate * laborMultiplier;
+            const laborTotal = laborPerUnit * qty;
+
+            const materialTotal = item.materialPrice * qty;
+
+            // For total display sum (not used in split rows but good for debugging)
+            const lineTotal = laborTotal + materialTotal;
+
+            return { laborPerUnit, laborTotal, materialTotal, lineTotal };
+        }
+
+        // ===== UPDATES (Standard) =====
+        function updateItem(catId, itemId, field, value) {
+            const cat = calculatorData.categories.find(c => c.id === catId);
+            const item = cat.items.find(i => i.id === itemId);
+            if (item) { item[field] = value; saveData(); render(); }
+        }
+
+        function addRow(catId) {
+            const cat = calculatorData.categories.find(c => c.id === catId);
+            cat.items.push({ id: 'i-' + Date.now(), selected: true, quantity: 0, formula: '0', material: 'Ny artikel', materialPrice: 0, unit: 'st', time: 0 });
+            saveData(); render();
+        }
+        function deleteRow(catId, itemId) {
+            const cat = calculatorData.categories.find(c => c.id === catId);
+            cat.items = cat.items.filter(i => i.id !== itemId);
+            saveData(); render();
+        }
+        function duplicateRow(catId, itemId) {
+            const cat = calculatorData.categories.find(c => c.id === catId);
+            const item = cat.items.find(i => i.id === itemId);
+            cat.items.push({ ...item, id: 'i-' + Date.now(), material: item.material + ' (kopia)' });
+            saveData(); render();
+        }
+        function toggleCategory(id) {
+            const cat = calculatorData.categories.find(c => c.id === id);
+            cat.collapsed = !cat.collapsed; saveData(); render();
+        }
+        function addCategory() {
+            document.getElementById('categoryModal').classList.remove('hidden');
+            document.getElementById('categoryModal').classList.add('flex');
+            document.getElementById('categoryNameInput').focus();
+        }
+        function closeCategoryModal() { document.getElementById('categoryModal').classList.add('hidden'); document.getElementById('categoryModal').classList.remove('flex'); }
+        function confirmAddCategory() {
+            const name = document.getElementById('categoryNameInput').value;
+            if (name) { calculatorData.categories.push({ id: 'c-' + Date.now(), name, collapsed: false, items: [] }); saveData(); render(); closeCategoryModal(); }
+        }
+        function deleteCategory(id) {
+            // Show custom modal instead of native confirm()
+            document.getElementById('deleteCategoryId').value = id;
+            document.getElementById('deleteCategoryModal').classList.remove('hidden');
+            document.getElementById('deleteCategoryModal').classList.add('flex');
+        }
+        function closeDeleteCategoryModal() {
+            document.getElementById('deleteCategoryModal').classList.add('hidden');
+            document.getElementById('deleteCategoryModal').classList.remove('flex');
+        }
+        function confirmDeleteCategory() {
+            const id = document.getElementById('deleteCategoryId').value;
+            calculatorData.categories = calculatorData.categories.filter(c => c.id !== id);
+            saveData();
+            render();
+            closeDeleteCategoryModal();
+            showToast('Kategori raderad!');
+        }
+        function editCategoryName(id) {
+            const cat = calculatorData.categories.find(c => c.id === id);
+            const newName = prompt("Namn:", cat.name);
+            if (newName) { cat.name = newName; saveData(); render(); }
+        }
+
+        // ===== QUOTE & EXPORT =====
+        function addToQuote() {
+            const selectedItems = [];
+            calculatorData.categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    const hasLabor = item.selectedLabor;
+                    const hasMaterial = item.selectedMaterial;
+
+                    if (hasLabor || hasMaterial) {
+                        const calcs = calculateItem(item);
+
+                        // Determine exported values based on selection
+                        const exportTime = hasLabor ? (item.time || 0) : 0;
+                        const exportMatPrice = hasMaterial ? item.materialPrice : 0;
+
+                        // Recalculate labor price for export based on potentially zeroed time
+                        const exportLaborPrice = exportTime * calculatorData.laborRate;
+
+                        selectedItems.push({
+                            category: cat.name,
+                            name: item.material,
+                            unit: item.unit,
+                            quantity: item.quantity || 1,
+                            laborPrice: exportLaborPrice,
+                            materialPrice: exportMatPrice,
+                            formula: item.formula || '',
+                            time: exportTime
+                        });
+                    }
+                });
+            });
+
+            if (selectedItems.length === 0) {
+                showToast("Inga artiklar valda!", "error");
+                return;
+            }
+
+            localStorage.setItem('constructPro_quoteImport', JSON.stringify({
+                date: new Date().toISOString(),
+                items: selectedItems,
+                terms: calculatorData.terms || ''
+            }));
+
+            // syncing dimensions - Save current dimensions to shared storage so Quote page can use them
+            const sharedDims = {
+                l: calculatorData.dimensions.l,
+                w: calculatorData.dimensions.w,
+                h: calculatorData.dimensions.h,
+                details: calculatorData.details,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('constructPro_oferta_dimensions', JSON.stringify(sharedDims));
+
+            showToast(`${selectedItems.length} artiklar sparade till Offert!`, "success");
+            setTimeout(() => { if (confirm("Gå till offerten?")) window.location.href = 'oferta.html'; }, 500);
+        }
+
+        // Save selected items as a Quote Preset (for arbetstyp dropdown on oferta page)
+        function saveAsQuotePreset() {
+            // Check if any items are selected first
+            let hasSelection = false;
+            calculatorData.categories.forEach(cat => {
+                cat.items.forEach(item => {
+                    if (item.selectedLabor || item.selectedMaterial) hasSelection = true;
+                });
+            });
+
+            if (!hasSelection) {
+                showToast(getT().noItemsSelected, "error");
+                return;
+            }
+
+            // Show the modal
+            document.getElementById('quotePresetModal').classList.remove('hidden');
+            document.getElementById('quotePresetModal').classList.add('flex');
+            document.getElementById('quotePresetNameInput').value = '';
+            document.getElementById('quotePresetNameInput').focus();
+        }
+
+        function closeQuotePresetModal() {
+            document.getElementById('quotePresetModal').classList.add('hidden');
+            document.getElementById('quotePresetModal').classList.remove('flex');
+        }
+
+        function confirmSaveQuotePreset() {
+            const t = getT();
+            const name = document.getElementById('quotePresetNameInput').value.trim();
+            if (!name) {
+                showToast("Ange ett namn!", "error");
+                return;
+            }
+
+            // Get selected items for the preset
+            const workItems = {};
+            const selections = {};
+
+            calculatorData.categories.forEach(cat => {
+                cat.items.forEach((item, idx) => {
+                    const hasLabor = item.selectedLabor;
+                    const hasMaterial = item.selectedMaterial;
+
+                    if (hasLabor || hasMaterial) {
+                        const calcs = calculateItem(item);
+
+                        // Map calculator category names to quote category keys
+                        let catKey = 'other';
+                        const catNameLower = cat.name.toLowerCase();
+                        if (catNameLower.includes('riv')) catKey = 'demolition';
+                        else if (catNameLower.includes('för')) catKey = 'preparation';
+                        else if (catNameLower.includes('tät')) catKey = 'waterproofing';
+                        else if (catNameLower.includes('tak') || catNameLower.includes('mål')) catKey = 'ceiling';
+                        else if (catNameLower.includes('mont') || catNameLower.includes('kakel') || catNameLower.includes('klink')) catKey = 'fixtures';
+                        else if (catNameLower.includes('vvs')) catKey = 'plumbing';
+                        else if (catNameLower.includes('el')) catKey = 'electrical';
+
+                        if (!workItems[catKey]) workItems[catKey] = [];
+
+                        // Determine exported values based on selection
+                        const exportTime = hasLabor ? (item.time || 0) : 0;
+                        const exportMatPrice = hasMaterial ? (item.materialPrice || 0) : 0;
+                        const exportLaborPrice = exportTime * calculatorData.laborRate;
+
+                        workItems[catKey].push({
+                            name: item.material,
+                            unit: item.unit,
+                            laborPrice: exportLaborPrice,
+                            materialPrice: exportMatPrice,
+                            importedQty: item.quantity || 1,
+                            formula: item.formula || '',
+                            isImport: true
+                        });
+
+                        const itemIdx = workItems[catKey].length - 1;
+                        const key = `${catKey}-${itemIdx}`;
+                        selections[key] = {
+                            checked: true,
+                            cat: catKey,
+                            index: itemIdx,
+                            qty: item.quantity || 1
+                        };
+                    }
+                });
+            });
+
+            // Save to quote presets in localStorage
+            let quotePresets = [];
+            const saved = localStorage.getItem('constructPro_quotePresets');
+            if (saved) {
+                try { quotePresets = JSON.parse(saved); } catch (e) { quotePresets = []; }
+            }
+
+            quotePresets.push({
+                name: name,
+                workItems: workItems,
+                selections: selections
+            });
+
+            localStorage.setItem('constructPro_quotePresets', JSON.stringify(quotePresets));
+            closeQuotePresetModal();
+            showToast(`${t.presetSaved} "${name}"`, "success");
+        }
+
+        // Terms Handling
+        function openTermsModal() {
+            document.getElementById('termsInput').value = calculatorData.terms || '';
+            document.getElementById('termsModal').classList.remove('hidden');
+            document.getElementById('termsModal').classList.add('flex');
+        }
+        function closeTermsModal() {
+            document.getElementById('termsModal').classList.add('hidden');
+            document.getElementById('termsModal').classList.remove('flex');
+        }
+        function saveTerms() {
+            calculatorData.terms = document.getElementById('termsInput').value;
+            saveData();
+            closeTermsModal();
+            showToast('Villkor sparade!', 'success');
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').textContent = msg;
+            t.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-xl translate-y-0 transition-transform duration-300 flex items-center gap-3 ${type === 'error' ? 'bg-red-600' : 'bg-green-600'}`;
+            setTimeout(() => t.classList.add('translate-y-20'), 3000);
+        }
+
+        // ===== PRESETS =====
+        function renderPresets() {
+            const c = document.getElementById('presetsContainer');
+            c.innerHTML = presets.map((p, i) => `
+                <div class="preset-chip bg-slate-100 border px-2 py-1 rounded text-xs flex items-center gap-1 cursor-pointer" onclick="loadPreset(${i})">
+                    <span>${p.name}</span>
+                    <i class="fas fa-times text-slate-300 hover:text-red-500 ml-1" onclick="event.stopPropagation(); deletePreset(${i})"></i>
+                </div>
+             `).join('');
+        }
+        function saveAsPreset() {
+            document.getElementById('presetModal').classList.remove('hidden');
+            document.getElementById('presetModal').classList.add('flex');
+            document.getElementById('presetNameInput').focus();
+        }
+        function closePresetModal() { document.getElementById('presetModal').classList.add('hidden'); document.getElementById('presetModal').classList.remove('flex'); }
+        function confirmSavePreset() {
+            const name = document.getElementById('presetNameInput').value;
+            if (name) { presets.push({ name, data: JSON.parse(JSON.stringify(calculatorData.categories)) }); savePresets(); renderPresets(); closePresetModal(); }
+        }
+        function loadPreset(i) {
+            if (confirm("Ladda mall?")) { calculatorData.categories = JSON.parse(JSON.stringify(presets[i].data)); saveData(); render(); }
+        }
+        function deletePreset(i) { if (confirm("Radera?")) { presets.splice(i, 1); savePresets(); renderPresets(); } }
+
+        // Start
+        document.getElementById('laborRateInput').addEventListener('change', function () { calculatorData.laborRate = parseFloat(this.value); saveData(); render(); });
+        document.getElementById('vatInput').addEventListener('change', function () { calculatorData.vatPercent = parseFloat(this.value); saveData(); render(); });
+        document.getElementById('searchInput').addEventListener('input', render);
+
+        loadData();
+        applyLanguage();
+
+        // Reset dimensions when leaving Calculator page so they don't interfere with Oferta-provided values
+        // Real-time Sync: Listen for commands from Master (Checklist)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'constructPro_oferta_dimensions' && e.newValue) {
+                try {
+                    const d = JSON.parse(e.newValue);
+
+                    // Update Calculator Data strictly from Master
+                    calculatorData.dimensions.l = d.l || 0;
+                    calculatorData.dimensions.w = d.w || 0;
+                    calculatorData.dimensions.h = d.h || 0;
+
+                    // Update Details
+                    if (d.details) {
+                        calculatorData.details.corn.i = d.details.corn?.i || 0;
+                        calculatorData.details.corn.o = d.details.corn?.o || 0;
+                        calculatorData.details.pipes.p1 = d.details.pipes?.p1 || 0;
+                        calculatorData.details.pipes.p2 = d.details.pipes?.p2 || 0;
+                        calculatorData.details.pipes.p3 = d.details.pipes?.p3 || 0;
+                        calculatorData.details.pipes.fd = d.details.pipes?.fd || 0;
+                        // Doors/Windows logic if implemented in calculatorData...
+                    }
+
+                    // Update UI Inputs (Visual Only since they are Read-Only)
+                    document.getElementById('dimL').value = d.l || '';
+                    document.getElementById('dimW').value = d.w || '';
+                    document.getElementById('dimH').value = d.h || '';
+
+                    document.getElementById('cornIn').value = d.details?.corn?.i || '';
+                    document.getElementById('cornOut').value = d.details?.corn?.o || '';
+                    document.getElementById('pipe1').value = d.details?.pipes?.p1 || '';
+                    document.getElementById('pipe2').value = d.details?.pipes?.p2 || '';
+                    document.getElementById('pipe3').value = d.details?.pipes?.p3 || '';
+                    document.getElementById('drain').value = d.details?.pipes?.fd || '';
+
+                    // Trigger logical update
+                    saveData();
+                    updateDimensions();
+                } catch (err) { console.error("Sync error", err); }
+            }
+        });
+
+        // FORCE SYNC ON LOAD (Startup Check)
+        function loadSharedDimensions() {
+            const saved = localStorage.getItem('constructPro_oferta_dimensions');
+            if (saved) {
+                try {
+                    const d = JSON.parse(saved);
+                    // Force update Calculator internal state
+                    calculatorData.dimensions.l = d.l || 0;
+                    calculatorData.dimensions.w = d.w || 0;
+                    calculatorData.dimensions.h = d.h || 0;
+
+                    if (d.details) {
+                        calculatorData.details.corn.i = d.details.corn?.i || 0;
+                        calculatorData.details.corn.o = d.details.corn?.o || 0;
+                        calculatorData.details.pipes.p1 = d.details.pipes?.p1 || 0;
+                        calculatorData.details.pipes.p2 = d.details.pipes?.p2 || 0;
+                        calculatorData.details.pipes.p3 = d.details.pipes?.p3 || 0;
+                        calculatorData.details.pipes.fd = d.details.pipes?.fd || 0;
+                    }
+                    // Update UI
+                    document.getElementById('dimL').value = d.l || '';
+                    document.getElementById('dimW').value = d.w || '';
+                    document.getElementById('dimH').value = d.h || '';
+                    document.getElementById('cornIn').value = d.details?.corn?.i || '';
+                    document.getElementById('cornOut').value = d.details?.corn?.o || '';
+                    document.getElementById('pipe1').value = d.details?.pipes?.p1 || '';
+                    document.getElementById('pipe2').value = d.details?.pipes?.p2 || '';
+                    document.getElementById('pipe3').value = d.details?.pipes?.p3 || '';
+                    document.getElementById('drain').value = d.details?.pipes?.fd || '';
+
+                    saveData();
+                    updateDimensions();
+                } catch (e) { console.error("Error loading shared dimensions on startup", e); }
+            }
+        }
+
+        loadSharedDimensions(); // Call on startup overrides local data
+
+        window.addEventListener('beforeunload', function () {
+            // Reset dimensions to 0 in saved data
+            calculatorData.dimensions = { l: 0, w: 0, h: 0 };
+            saveData();
+        });
+    </script>
+</body>
+
+</html>

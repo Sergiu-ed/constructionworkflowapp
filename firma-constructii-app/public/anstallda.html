@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Anställda</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .input-field {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .employee-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .employee-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .work-cell {
+            min-height: 24px;
+            border-radius: 4px;
+            font-size: 10px;
+            padding: 2px 4px;
+            cursor: pointer;
+        }
+
+        .work-cell.has-work {
+            background: linear-gradient(135deg, #22c55e20, #22c55e40);
+            border-left: 3px solid #22c55e;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-4 py-2 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="text-slate-400 hover:text-blue-600 p-2"><i class="fas fa-arrow-left"></i></a>
+            <div id="navLogo">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fas fa-hammer"></i></div>
+            </div>
+            <div>
+                <h1 id="navCompName" class="font-bold text-sm">CONSTRUCT PRO</h1>
+                <p class="text-[10px] text-slate-500" data-i18n="staff">Personal</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="kunder.html" class="text-slate-500 hover:text-slate-700 px-3 py-2 text-sm"><i
+                    class="fas fa-users mr-1"></i><span data-i18n="customers">Kunder</span></a>
+            <button onclick="openAddModal()"
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-600">
+                <i class="fas fa-user-plus mr-1"></i><span data-i18n="new_employee">Ny Anställd</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Stats -->
+    <div class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl">
+                <p class="text-blue-100 text-xs" data-i18n="employees">Anställda</p>
+                <p id="statTotal" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl">
+                <p class="text-green-100 text-xs" data-i18n="hours_month">Timmar denna månad</p>
+                <p id="statHours" class="text-2xl font-bold">0h</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl">
+                <p class="text-purple-100 text-xs" data-i18n="active_projects">Aktiva projekt</p>
+                <p id="statProjects" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl">
+                <p class="text-orange-100 text-xs" data-i18n="birthdays_month">Födelsedagar denna månad</p>
+                <p id="statBirthdays" class="text-2xl font-bold">0</p>
+            </div>
+        </div>
+
+        <!-- Employee List -->
+        <div id="employeeList" class="space-y-4">
+            <!-- Cards rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <i class="fas fa-hard-hat text-6xl text-slate-300 mb-4"></i>
+            <h3 class="text-xl font-bold text-slate-600 mb-2" data-i18n="no_employees">Inga anställda ännu</h3>
+            <p class="text-slate-400 mb-4" data-i18n="add_first">Lägg till din första medarbetare</p>
+            <button onclick="openAddModal()" class="bg-blue-500 text-white px-6 py-3 rounded-lg font-bold">
+                <i class="fas fa-user-plus mr-2"></i><span data-i18n="add_employee">Lägg till anställd</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="employeeModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 flex justify-between items-center">
+                <h2 id="modalTitle" class="font-bold text-lg"><i class="fas fa-user-plus mr-2"></i>Ny Anställd</h2>
+                <button onclick="closeModal()" class="text-xl hover:opacity-70"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="empId">
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Namn *</label>
+                    <input type="text" id="empName" class="input-field" placeholder="Förnamn Efternamn">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Befattning</label>
+                        <select id="empRole" class="input-field">
+                            <option value="Snickare">Snickare</option>
+                            <option value="Elektriker">Elektriker</option>
+                            <option value="Rörmokare">Rörmokare</option>
+                            <option value="Målare">Målare</option>
+                            <option value="Plåtslagare">Plåtslagare</option>
+                            <option value="Lärling">Lärling</option>
+                            <option value="Projektledare">Projektledare</option>
+                            <option value="Annat">Annat</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Telefon</label>
+                        <input type="tel" id="empPhone" class="input-field" placeholder="+46 70 123 4567">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Födelsedag</label>
+                        <input type="date" id="empBirthday" class="input-field">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Anställd sedan</label>
+                        <input type="date" id="empStartDate" class="input-field">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">E-post</label>
+                    <input type="email" id="empEmail" class="input-field" placeholder="email@example.com">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Timlön (SEK)</label>
+                    <input type="number" id="empHourlyRate" class="input-field" placeholder="350">
+                </div>
+            </div>
+            <div class="border-t p-4 flex gap-3 justify-end bg-slate-50">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium">Avbryt</button>
+                <button onclick="saveEmployee()"
+                    class="px-6 py-2 bg-blue-500 text-white rounded-lg font-bold hover:bg-blue-600">
+                    <i class="fas fa-save mr-1"></i>Spara
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Detail Modal -->
+    <div id="detailModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-4xl overflow-hidden shadow-2xl">
+            <div id="detailHeader"
+                class="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-4 flex justify-between items-center">
+                <h2 id="detailTitle" class="font-bold text-lg"><i class="fas fa-user mr-2"></i>Anställd</h2>
+                <button onclick="closeDetailModal()" class="text-xl hover:opacity-70"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div id="detailContent" class="p-6 max-h-[80vh] overflow-y-auto">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Hours Modal -->
+    <div id="logModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-4 flex justify-between items-center">
+                <h2 class="font-bold text-lg"><i class="fas fa-clock mr-2"></i>Logga Tid</h2>
+                <button onclick="closeLogModal()" class="text-xl hover:opacity-70"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="logEmpId">
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Datum</label>
+                    <input type="date" id="logDate" class="input-field">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Timmar</label>
+                    <input type="number" id="logHours" class="input-field" value="8" step="0.5" min="0" max="24">
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Projekt</label>
+                    <select id="logProject" class="input-field">
+                        <option value="">Välj projekt...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Beskrivning</label>
+                    <input type="text" id="logDesc" class="input-field" placeholder="Vad gjorde du?">
+                </div>
+            </div>
+            <div class="border-t p-4 flex gap-3 justify-end bg-slate-50">
+                <button onclick="closeLogModal()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium">Avbryt</button>
+                <button onclick="saveLog()"
+                    class="px-6 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600">
+                    <i class="fas fa-check mr-1"></i>Spara
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let employees = [];
+        let projects = [];
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+
+        // Translations
+        const translations = {
+            sv: {
+                staff: 'Personal', employees: 'Anställda', hours_month: 'Timmar denna månad', active_projects: 'Aktiva projekt',
+                birthdays_month: 'Födelsedagar denna månad', new_employee: 'Ny Anställd', customers: 'Kunder',
+                no_employees: 'Inga anställda ännu', add_first: 'Lägg till din första medarbetare', add_employee: 'Lägg till anställd',
+                name: 'Namn', position: 'Befattning', phone: 'Telefon', birthday: 'Födelsedag', employed_since: 'Anställd sedan',
+                email: 'E-post', hourly_rate: 'Timlön (SEK)', cancel: 'Avbryt', save: 'Spara', edit_employee: 'Redigera Anställd',
+                log_time: 'Logga Tid', date: 'Datum', hours: 'Timmar', project: 'Projekt', description: 'Beskrivning',
+                what_did: 'Vad gjorde du?', select_project: 'Välj projekt...', this_month: 'Denna månad',
+                work_history: 'Arbetshistorik', hours_per_project: 'Timmar per projekt', no_logged_hours: 'Inga loggade timmar',
+                print_report: 'Skriv ut rapport', delete_confirm: 'Ta bort denna anställd?', name_required: 'Namn krävs',
+                carpenter: 'Snickare', electrician: 'Elektriker', plumber: 'Rörmokare', painter: 'Målare',
+                sheet_metal: 'Plåtslagare', apprentice: 'Lärling', project_manager: 'Projektledare', other: 'Annat',
+                years: 'år', worked: 'Arbetade'
+            },
+            en: {
+                staff: 'Staff', employees: 'Employees', hours_month: 'Hours this month', active_projects: 'Active projects',
+                birthdays_month: 'Birthdays this month', new_employee: 'New Employee', customers: 'Customers',
+                no_employees: 'No employees yet', add_first: 'Add your first employee', add_employee: 'Add employee',
+                name: 'Name', position: 'Position', phone: 'Phone', birthday: 'Birthday', employed_since: 'Employed since',
+                email: 'Email', hourly_rate: 'Hourly rate (SEK)', cancel: 'Cancel', save: 'Save', edit_employee: 'Edit Employee',
+                log_time: 'Log Time', date: 'Date', hours: 'Hours', project: 'Project', description: 'Description',
+                what_did: 'What did you do?', select_project: 'Select project...', this_month: 'This month',
+                work_history: 'Work history', hours_per_project: 'Hours per project', no_logged_hours: 'No logged hours',
+                print_report: 'Print report', delete_confirm: 'Delete this employee?', name_required: 'Name required',
+                carpenter: 'Carpenter', electrician: 'Electrician', plumber: 'Plumber', painter: 'Painter',
+                sheet_metal: 'Sheet metal worker', apprentice: 'Apprentice', project_manager: 'Project manager', other: 'Other',
+                years: 'years', worked: 'Worked'
+            },
+            ro: {
+                staff: 'Personal', employees: 'Angajați', hours_month: 'Ore luna aceasta', active_projects: 'Proiecte active',
+                birthdays_month: 'Zile naștere luna aceasta', new_employee: 'Angajat Nou', customers: 'Clienți',
+                no_employees: 'Niciun angajat încă', add_first: 'Adaugă primul angajat', add_employee: 'Adaugă angajat',
+                name: 'Nume', position: 'Funcție', phone: 'Telefon', birthday: 'Ziua nașterii', employed_since: 'Angajat din',
+                email: 'Email', hourly_rate: 'Tarif orar (SEK)', cancel: 'Anulează', save: 'Salvează', edit_employee: 'Editează Angajat',
+                log_time: 'Înregistrează Timp', date: 'Data', hours: 'Ore', project: 'Proiect', description: 'Descriere',
+                what_did: 'Ce ai făcut?', select_project: 'Selectează proiect...', this_month: 'Luna aceasta',
+                work_history: 'Istoric muncă', hours_per_project: 'Ore per proiect', no_logged_hours: 'Fără ore înregistrate',
+                print_report: 'Tipărește raport', delete_confirm: 'Ștergi acest angajat?', name_required: 'Numele e obligatoriu',
+                carpenter: 'Tâmplar', electrician: 'Electrician', plumber: 'Instalator', painter: 'Zugrav',
+                sheet_metal: 'Tinichigiu', apprentice: 'Ucenic', project_manager: 'Manager proiect', other: 'Altul',
+                years: 'ani', worked: 'Lucrat'
+            }
+        };
+        const t = translations[currentLang] || translations.sv;
+
+        function loadData() {
+            try {
+                employees = JSON.parse(localStorage.getItem('constructPro_employees') || '[]');
+                const settings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+                projects = settings.projects || [];
+                if (settings.company?.name) document.getElementById('navCompName').innerText = settings.company.name;
+                if (settings.company?.logo) document.getElementById('navLogo').innerHTML = `<img src="${settings.company.logo}" class="h-10 object-contain">`;
+            } catch (e) { }
+            applyTranslations();
+            renderEmployees();
+            updateStats();
+        }
+
+        function applyTranslations() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (t[key]) el.innerText = t[key];
+            });
+        }
+
+        function getAge(birthday) {
+            if (!birthday) return '-';
+            const today = new Date();
+            const birth = new Date(birthday);
+            let age = today.getFullYear() - birth.getFullYear();
+            const m = today.getMonth() - birth.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+            return age;
+        }
+
+        function getYearsWorked(startDate) {
+            if (!startDate) return '-';
+            const today = new Date();
+            const start = new Date(startDate);
+            const years = ((today - start) / (365.25 * 24 * 60 * 60 * 1000)).toFixed(1);
+            return years + ' år';
+        }
+
+        function getMonthHours(emp, year, month) {
+            if (!emp.workLog) return 0;
+            return emp.workLog.filter(w => {
+                const d = new Date(w.date);
+                return d.getFullYear() === year && d.getMonth() === month;
+            }).reduce((sum, w) => sum + (w.hours || 0), 0);
+        }
+
+        function renderEmployees() {
+            const list = document.getElementById('employeeList');
+            const empty = document.getElementById('emptyState');
+
+            if (employees.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+            const now = new Date();
+
+            list.innerHTML = employees.map(e => {
+                const monthHours = getMonthHours(e, now.getFullYear(), now.getMonth());
+                const roleColors = {
+                    'Snickare': 'bg-orange-100 text-orange-600',
+                    'Elektriker': 'bg-yellow-100 text-yellow-600',
+                    'Rörmokare': 'bg-blue-100 text-blue-600',
+                    'Målare': 'bg-purple-100 text-purple-600',
+                    'Projektledare': 'bg-green-100 text-green-600',
+                    'Lärling': 'bg-slate-100 text-slate-600'
+                };
+                const roleColor = roleColors[e.role] || 'bg-slate-100 text-slate-600';
+
+                return `
+                <div class="employee-card cursor-pointer" onclick="showDetail('${e.id}')">
+                    <div class="p-4 flex flex-col md:flex-row gap-4">
+                        <div class="flex items-center gap-4 flex-1">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+                                ${e.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h3 class="font-bold text-slate-800 text-lg">${e.name}</h3>
+                                    <span class="badge ${roleColor}">${e.role || 'Ej angiven'}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-4 mt-2 text-sm text-slate-500">
+                                    <span><i class="fas fa-birthday-cake mr-1 text-pink-400"></i>${e.birthday ? new Date(e.birthday).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' }) + ' (' + getAge(e.birthday) + ' år)' : '-'}</span>
+                                    <span><i class="fas fa-briefcase mr-1 text-blue-400"></i>${getYearsWorked(e.startDate)}</span>
+                                    <span><i class="fas fa-phone mr-1 text-green-400"></i>${e.phone || '-'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="text-center px-4 py-2 bg-green-50 rounded-lg">
+                                <p class="text-2xl font-bold text-green-600">${monthHours}h</p>
+                                <p class="text-xs text-green-500">Denna månad</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="event.stopPropagation(); openLogModal('${e.id}')" class="p-2 bg-green-100 text-green-600 rounded-lg hover:bg-green-200" title="Logga tid">
+                                    <i class="fas fa-clock"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); editEmployee('${e.id}')" class="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200" title="Redigera">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button onclick="event.stopPropagation(); deleteEmployee('${e.id}')" class="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200" title="Ta bort">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateStats() {
+            const now = new Date();
+            const thisMonth = employees.reduce((sum, e) => sum + getMonthHours(e, now.getFullYear(), now.getMonth()), 0);
+            const birthdays = employees.filter(e => {
+                if (!e.birthday) return false;
+                return new Date(e.birthday).getMonth() === now.getMonth();
+            }).length;
+
+            document.getElementById('statTotal').innerText = employees.length;
+            document.getElementById('statHours').innerText = thisMonth + 'h';
+            document.getElementById('statProjects').innerText = projects.filter(p => p.status === 'active').length;
+            document.getElementById('statBirthdays').innerText = birthdays;
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-plus mr-2"></i>Ny Anställd';
+            document.getElementById('empId').value = '';
+            document.getElementById('empName').value = '';
+            document.getElementById('empRole').value = 'Snickare';
+            document.getElementById('empPhone').value = '';
+            document.getElementById('empBirthday').value = '';
+            document.getElementById('empStartDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('empEmail').value = '';
+            document.getElementById('empHourlyRate').value = '350';
+            document.getElementById('employeeModal').classList.add('active');
+        }
+
+        function editEmployee(id) {
+            const e = employees.find(x => x.id === id);
+            if (!e) return;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-user-edit mr-2"></i>Redigera Anställd';
+            document.getElementById('empId').value = e.id;
+            document.getElementById('empName').value = e.name;
+            document.getElementById('empRole').value = e.role || 'Snickare';
+            document.getElementById('empPhone').value = e.phone || '';
+            document.getElementById('empBirthday').value = e.birthday || '';
+            document.getElementById('empStartDate').value = e.startDate || '';
+            document.getElementById('empEmail').value = e.email || '';
+            document.getElementById('empHourlyRate').value = e.hourlyRate || '350';
+            document.getElementById('employeeModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('employeeModal').classList.remove('active');
+        }
+
+        function saveEmployee() {
+            const id = document.getElementById('empId').value;
+            const data = {
+                id: id || 'emp_' + Date.now(),
+                name: document.getElementById('empName').value.trim(),
+                role: document.getElementById('empRole').value,
+                phone: document.getElementById('empPhone').value.trim(),
+                birthday: document.getElementById('empBirthday').value,
+                startDate: document.getElementById('empStartDate').value,
+                email: document.getElementById('empEmail').value.trim(),
+                hourlyRate: parseFloat(document.getElementById('empHourlyRate').value) || 350,
+                workLog: id ? employees.find(e => e.id === id)?.workLog || [] : []
+            };
+
+            if (!data.name) { alert('Namn krävs'); return; }
+
+            if (id) {
+                const idx = employees.findIndex(e => e.id === id);
+                if (idx >= 0) employees[idx] = data;
+            } else {
+                employees.push(data);
+            }
+
+            localStorage.setItem('constructPro_employees', JSON.stringify(employees));
+            closeModal();
+            renderEmployees();
+            updateStats();
+        }
+
+        function deleteEmployee(id) {
+            if (!confirm('Ta bort denna anställd?')) return;
+            employees = employees.filter(e => e.id !== id);
+            localStorage.setItem('constructPro_employees', JSON.stringify(employees));
+            renderEmployees();
+            updateStats();
+        }
+
+        function showDetail(id) {
+            const e = employees.find(x => x.id === id);
+            if (!e) return;
+
+            const now = new Date();
+            const monthHours = getMonthHours(e, now.getFullYear(), now.getMonth());
+
+            // Generate calendar for current month
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDay = (firstDay.getDay() || 7) - 1;
+            const daysInMonth = lastDay.getDate();
+
+            let calHtml = `<div class="grid grid-cols-7 gap-1 text-center text-xs font-bold text-slate-500 mb-2">
+                <span>M</span><span>T</span><span>O</span><span>T</span><span>F</span><span class="text-red-400">L</span><span class="text-red-400">S</span>
+            </div><div class="grid grid-cols-7 gap-1">`;
+
+            // Empty cells
+            for (let i = 0; i < startDay; i++) {
+                calHtml += '<div class="work-cell"></div>';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayLog = e.workLog?.find(w => w.date === dateKey);
+                const hasWork = dayLog && dayLog.hours > 0;
+                const isWeekend = new Date(year, month, d).getDay() % 6 === 0;
+
+                calHtml += `<div class="work-cell ${hasWork ? 'has-work' : ''} ${isWeekend ? 'bg-slate-50' : ''}" 
+                    onclick="event.stopPropagation(); quickLog('${e.id}', '${dateKey}')" 
+                    title="${hasWork ? dayLog.hours + 'h - ' + (dayLog.project || '') : 'Klicka för att logga'}">
+                    <span class="font-bold ${isWeekend ? 'text-red-400' : ''}">${d}</span>
+                    ${hasWork ? `<span class="ml-1 text-green-600">${dayLog.hours}h</span>` : ''}
+                </div>`;
+            }
+            calHtml += '</div>';
+
+            // Project summary
+            const projectHours = {};
+            (e.workLog || []).forEach(w => {
+                if (new Date(w.date).getMonth() === month) {
+                    const pName = w.project || 'Okänt';
+                    projectHours[pName] = (projectHours[pName] || 0) + (w.hours || 0);
+                }
+            });
+
+            document.getElementById('detailTitle').innerHTML = `<i class="fas fa-user mr-2"></i>${e.name}`;
+            document.getElementById('detailContent').innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-1">
+                        <div class="text-center mb-6">
+                            <div class="w-24 h-24 mx-auto bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold text-3xl mb-3">
+                                ${e.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2).toUpperCase()}
+                            </div>
+                            <h3 class="font-bold text-xl">${e.name}</h3>
+                            <span class="badge bg-blue-100 text-blue-600">${e.role || 'Ej angiven'}</span>
+                        </div>
+                        <div class="space-y-3 text-sm">
+                            <p><i class="fas fa-birthday-cake text-pink-400 w-5"></i> <b>Födelsedag:</b> ${e.birthday ? new Date(e.birthday).toLocaleDateString('sv-SE') + ' (' + getAge(e.birthday) + ' år)' : '-'}</p>
+                            <p><i class="fas fa-briefcase text-blue-400 w-5"></i> <b>Anställd sedan:</b> ${e.startDate ? new Date(e.startDate).toLocaleDateString('sv-SE') : '-'}</p>
+                            <p><i class="fas fa-clock text-green-400 w-5"></i> <b>Arbetade:</b> ${getYearsWorked(e.startDate)}</p>
+                            <p><i class="fas fa-phone text-slate-400 w-5"></i> <b>Telefon:</b> ${e.phone || '-'}</p>
+                            <p><i class="fas fa-envelope text-slate-400 w-5"></i> <b>E-post:</b> ${e.email || '-'}</p>
+                            <p><i class="fas fa-coins text-yellow-500 w-5"></i> <b>Timlön:</b> ${e.hourlyRate || 350} SEK</p>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-slate-700"><i class="fas fa-calendar text-orange-500 mr-2"></i>Arbetshistorik - ${new Date(year, month).toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })}</h3>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-green-600">${monthHours}h</p>
+                                <p class="text-xs text-slate-400">Denna månad</p>
+                            </div>
+                        </div>
+                        ${calHtml}
+                        
+                        <h3 class="font-bold text-slate-700 mt-6 mb-3"><i class="fas fa-project-diagram text-purple-500 mr-2"></i>Timmar per projekt</h3>
+                        <div class="space-y-2">
+                            ${Object.keys(projectHours).length > 0 ? Object.entries(projectHours).map(([name, hours]) => `
+                                <div class="flex justify-between items-center p-2 bg-slate-50 rounded">
+                                    <span>${name}</span>
+                                    <span class="font-bold text-green-600">${hours}h</span>
+                                </div>
+                            `).join('') : '<p class="text-slate-400 text-sm">Inga loggade timmar</p>'}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t flex justify-end">
+                     <button onclick="window.print()" class="flex items-center gap-2 text-slate-600 hover:text-slate-800 font-medium">
+                        <i class="fas fa-print"></i> Skriv ut rapport
+                    </button>
+                </div>
+            `;
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function openLogModal(empId) {
+            document.getElementById('logEmpId').value = empId;
+            document.getElementById('logDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('logHours').value = '8';
+            document.getElementById('logDesc').value = '';
+
+            // Populate projects
+            const sel = document.getElementById('logProject');
+            sel.innerHTML = '<option value="">Välj projekt...</option>' +
+                projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+
+            document.getElementById('logModal').classList.add('active');
+        }
+
+        function quickLog(empId, date) {
+            document.getElementById('logEmpId').value = empId;
+            document.getElementById('logDate').value = date;
+            document.getElementById('logHours').value = '8';
+            document.getElementById('logDesc').value = '';
+
+            const sel = document.getElementById('logProject');
+            sel.innerHTML = '<option value="">Välj projekt...</option>' +
+                projects.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+
+            document.getElementById('logModal').classList.add('active');
+        }
+
+        function closeLogModal() {
+            document.getElementById('logModal').classList.remove('active');
+        }
+
+        function saveLog() {
+            const empId = document.getElementById('logEmpId').value;
+            const emp = employees.find(e => e.id === empId);
+            if (!emp) return;
+
+            if (!emp.workLog) emp.workLog = [];
+
+            const date = document.getElementById('logDate').value;
+            const hours = parseFloat(document.getElementById('logHours').value) || 0;
+            const project = document.getElementById('logProject').value;
+            const desc = document.getElementById('logDesc').value.trim();
+
+            // Remove existing log for same date
+            emp.workLog = emp.workLog.filter(w => w.date !== date);
+
+            if (hours > 0) {
+                emp.workLog.push({ date, hours, project, desc });
+            }
+
+            localStorage.setItem('constructPro_employees', JSON.stringify(employees));
+            closeLogModal();
+            renderEmployees();
+            updateStats();
+
+            // Refresh detail if open
+            if (document.getElementById('detailModal').classList.contains('active')) {
+                showDetail(empId);
+            }
+        }
+
+        // Init
+        loadData();
+    </script>
+</body>
+
+</html>

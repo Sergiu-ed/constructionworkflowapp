@@ -1,0 +1,2255 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Offert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .section {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 10px 14px;
+            font-weight: 700;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-left: 4px solid;
+        }
+
+        .section-body {
+            padding: 12px;
+            background: #fafbfc;
+        }
+
+        .section-body.hidden {
+            display: none;
+        }
+
+        .check-row {
+            display: grid;
+            grid-template-columns: 24px 1fr 80px;
+            gap: 8px;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .check-row:hover {
+            background: #f1f5f9;
+        }
+
+        .check-row.checked {
+            background: #dcfce7;
+        }
+
+        .check-row input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: #22c55e;
+        }
+
+        .qty-input {
+            width: 50px;
+            padding: 4px 6px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 11px;
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        .qty-input::-webkit-outer-spin-button,
+        .qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"] {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .qty-read-only {
+            width: 50px;
+            padding: 4px 6px;
+            border: 1px solid transparent;
+            background: transparent;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .price-cell {
+            text-align: right;
+            font-weight: 600;
+            font-size: 11px;
+            color: #059669;
+        }
+
+        .subtotal-row {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-sm {
+            padding: 8px 10px;
+            font-size: 13px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        .input-sm:focus {
+            outline: none;
+            border-color: #f97316;
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            color: white;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .summary-row.total {
+            font-size: 18px;
+            font-weight: 700;
+            border-bottom: none;
+            padding-top: 12px;
+        }
+
+        .rot-row {
+            background: #22c55e;
+            margin: -16px;
+            margin-top: 12px;
+            padding: 12px 16px;
+            border-radius: 0 0 12px 12px;
+        }
+
+        /* Print - A4 Paper */
+        .paper {
+            background: white;
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 20mm;
+            box-sizing: border-box;
+        }
+
+        /* Editable fields in quote */
+        .editable {
+            border: 1px dashed transparent;
+            padding: 2px 4px;
+            border-radius: 2px;
+            min-width: 50px;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+
+        .editable:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .editable:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #dbeafe;
+        }
+
+        @media print {
+            .editable {
+                border: none !important;
+                background: transparent !important;
+            }
+        }
+
+        @media print {
+
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+
+            /* Hide everything except the quote */
+            .no-print,
+            nav,
+            .section,
+            .summary-card,
+            .mt-6,
+            #previewModal>div>div:first-child {
+                display: none !important;
+            }
+
+            /* Force show the preview modal */
+            #previewModal,
+            #previewModal.hidden {
+                display: block !important;
+                position: static !important;
+                background: white !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                height: auto !important;
+            }
+
+            .paper {
+                box-shadow: none !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+
+            body {
+                background: white !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* Hide everything in body except the modal */
+            body>*:not(#previewModal) {
+                display: none !important;
+            }
+
+            /* Preserve table layouts - DO NOT use display:block on table elements */
+            #printArea table {
+                display: table !important;
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+
+            #printArea thead {
+                display: table-header-group !important;
+            }
+
+            #printArea tbody {
+                display: table-row-group !important;
+            }
+
+            #printArea tr {
+                display: table-row !important;
+            }
+
+            #printArea th,
+            #printArea td {
+                display: table-cell !important;
+            }
+
+            /* Ensure content is visible */
+            #printArea {
+                display: block !important;
+                visibility: visible !important;
+            }
+
+            #printArea div,
+            #printArea p,
+            #printArea h1,
+            #printArea h2 {
+                display: block !important;
+                visibility: visible !important;
+            }
+
+            #printArea span {
+                display: inline !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-4 py-2 flex justify-between items-center sticky top-0 z-50 shadow-sm no-print">
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="text-slate-400 hover:text-orange-600 p-2"><i class="fas fa-arrow-left"></i></a>
+            <div id="navLogo">
+                <div class="bg-orange-600 text-white p-2 rounded-lg"><i class="fas fa-hammer"></i></div>
+            </div>
+            <div>
+                <h1 id="navCompName" class="font-bold text-sm">CONSTRUCT PRO</h1>
+                <p class="text-[10px] text-slate-500">Ny Offert</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <select id="currencySelect" onchange="changeCurrency()" class="border text-sm rounded px-2 py-1">
+                <option value="SEK">SEK 🇸🇪</option>
+                <option value="EUR">EUR 🇪🇺</option>
+                <option value="RON">RON 🇷🇴</option>
+            </select>
+            <select id="langSelect" onchange="setLanguage(this.value)" class="border text-sm rounded px-2 py-1">
+                <option value="sv" selected>🇸🇪 SV</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="ro">🇷🇴 RO</option>
+            </select>
+            <button onclick="showPreview()"
+                class="bg-orange-500 text-white px-4 py-2 rounded text-sm font-bold hover:bg-orange-600">
+                <i class="fas fa-file-alt mr-1"></i>Förhandsvisning
+            </button>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-4 no-print">
+        <!-- Client Info -->
+        <div class="section">
+            <div class="section-header bg-slate-800 text-white border-l-slate-800">
+                <span><i class="fas fa-user mr-2"></i><span data-i18n="customerInfo">1. Kundinformation</span></span>
+            </div>
+            <div class="section-body">
+                <!-- Client Import Row -->
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <label class="text-xs text-blue-600 font-bold mb-1 block"><i class="fas fa-user-check mr-1"></i>Välj
+                        befintlig kund</label>
+                    <div class="flex gap-2">
+                        <select id="clientSelect" class="input-sm flex-1 font-medium"
+                            onchange="selectClient(this.value)">
+                            <option value="">-- Skriv manuellt eller välj --</option>
+                        </select>
+                        <button onclick="clearClientSelection()"
+                            class="px-3 py-1 bg-slate-200 rounded text-xs hover:bg-slate-300" title="Rensa">
+                            <i class="fas fa-eraser"></i>
+                        </button>
+                    </div>
+                    <input type="hidden" id="selectedClientId">
+                </div>
+
+                <!-- Client Fields -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div><label class="text-xs text-slate-500" data-i18n="name">Namn</label><input id="clName"
+                            class="input-sm"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="address">Adress</label><input id="clAddr"
+                            class="input-sm"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="cityZip">Postnr/Stad</label><input id="clCity"
+                            class="input-sm"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="phone">Telefon</label><input id="clPhone"
+                            class="input-sm"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="email">E-post</label><input id="clEmail"
+                            class="input-sm"></div>
+                    <div class="col-span-2 md:col-span-1">
+                        <label class="text-xs text-slate-500" data-i18n="workType">Arbetstyp</label>
+                        <div class="flex gap-1">
+                            <select id="clType" class="input-sm font-bold text-orange-600 flex-1"
+                                onchange="loadQuotePreset(this.value)">
+                                <option value="">-- Välj eller skriv --</option>
+                            </select>
+                            <button onclick="saveQuotePreset()"
+                                class="px-2 py-1 bg-green-500 text-white rounded text-xs hover:bg-green-600"
+                                title="Spara mall">
+                                <i class="fas fa-save"></i>
+                            </button>
+                            <button onclick="deleteQuotePreset()"
+                                class="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
+                                title="Radera vald mall">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dimensions (Hidden if imports used) -->
+        <div class="section" id="dimensionsSection">
+            <div class="section-header bg-blue-50 text-blue-700 border-l-blue-500" onclick="toggleSection(this)">
+                <span><i class="fas fa-ruler-combined mr-2"></i><span data-i18n="dimensions">Mått</span></span>
+                <i class="fas fa-chevron-down text-slate-400"></i>
+            </div>
+            <div class="section-body">
+                <div class="grid grid-cols-3 gap-3 mb-3">
+                    <div><label class="text-xs text-slate-500" data-i18n="length">Längd (m)</label><input type="number"
+                            id="dimLen" step="0.1" class="input-sm" oninput="calcAreas()"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="width">Bredd (m)</label><input type="number"
+                            id="dimWid" step="0.1" class="input-sm" oninput="calcAreas()"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="height">Höjd (m)</label><input type="number"
+                            id="dimHei" step="0.1" class="input-sm" oninput="calcAreas()"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-slate-100 p-2 rounded text-center"><span class="text-xs text-slate-500"
+                            data-i18n="walls">Väggar</span>
+                        <p id="wallArea" class="font-bold">0 m²</p>
+                    </div>
+                    <div class="bg-slate-100 p-2 rounded text-center"><span class="text-xs text-slate-500"
+                            data-i18n="floor">Golv</span>
+                        <p id="floorArea" class="font-bold">0 m²</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detaljer & Avdrag -->
+        <div class="section" id="detailsSection">
+            <div class="section-header bg-orange-50 text-orange-700 border-l-orange-500" onclick="toggleSection(this)">
+                <span><i class="fas fa-puzzle-piece mr-2"></i><span data-i18n="detailsDeductions">Detaljer &
+                        Avdrag</span></span>
+                <i class="fas fa-chevron-down text-slate-400"></i>
+            </div>
+            <div class="section-body">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+                    <!-- Door -->
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="doorH">Dörr H (m)</label>
+                        <input type="number" id="doorH" step="0.1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="doorW">Dörr B (m)</label>
+                        <input type="number" id="doorW" step="0.1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div class="col-span-2 flex items-end">
+                        <span class="text-xs text-slate-500" data-i18n="doorArea">Dörrarea (DA): </span>
+                        <strong id="calcDA" class="text-orange-600 ml-2">0</strong>
+                        <span class="text-xs text-slate-400 ml-1">m²</span>
+                    </div>
+
+                    <!-- Window -->
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="winH">Fönster H (m)</label>
+                        <input type="number" id="winH" step="0.1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="winW">Fönster B (m)</label>
+                        <input type="number" id="winW" step="0.1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div class="col-span-2 flex items-end">
+                        <span class="text-xs text-slate-500" data-i18n="winArea">Fönsterarea (WA): </span>
+                        <strong id="calcWA" class="text-orange-600 ml-2">0</strong>
+                        <span class="text-xs text-slate-400 ml-1">m²</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3 pt-3 border-t">
+                    <!-- Corners -->
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="innerCorners">Innerhörn (IC)</label>
+                        <input type="number" id="cornIn" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="outerCorners">Ytterhörn (OC)</label>
+                        <input type="number" id="cornOut" class="input-sm" oninput="calcDetails()">
+                    </div>
+
+                    <!-- Pipes -->
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="pipe1">Rör 10-20 (P1)</label>
+                        <input type="number" id="pipe1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="pipe2">Rör 32-55 (P2)</label>
+                        <input type="number" id="pipe2" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="wcPipe">WC Avl. (P3)</label>
+                        <input type="number" id="pipe3" class="input-sm" oninput="calcDetails()">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t">
+                    <div>
+                        <label class="text-xs text-slate-500" data-i18n="drain">Golvbrunn (FD)</label>
+                        <input type="number" id="drain" class="input-sm" oninput="calcDetails()">
+                    </div>
+                    <div>
+                        <label class="text-xs text-slate-500">Övriga avdrag (m²)</label>
+                        <input type="number" id="otherDeduct" step="0.1" class="input-sm" oninput="calcDetails()">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Work Categories -->
+        <div id="workSections"></div>
+
+        <!-- Materials (Only shown if legacy, imports merge this usually) -->
+        <div class="section hidden" id="materialsSection">
+            <div class="section-header bg-purple-50 text-purple-700 border-l-purple-500" onclick="toggleSection(this)">
+                <span><i class="fas fa-boxes-stacked mr-2"></i>Material</span>
+                <span class="text-xs bg-purple-100 px-2 py-1 rounded" id="materialSubtotal">0 SEK</span>
+            </div>
+            <div class="section-body" id="materialsList"></div>
+        </div>
+
+        <!-- Transport -->
+        <div class="section">
+            <div class="section-header bg-orange-50 text-orange-700 border-l-orange-500">
+                <span><i class="fas fa-truck mr-2"></i><span data-i18n="transport">Transport</span></span>
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-1 text-xs cursor-pointer">
+                        <input type="checkbox" id="includeTransport" checked onchange="calcAll()"
+                            class="accent-orange-500">
+                        <span data-i18n="includeInQuote">Inkludera</span>
+                    </label>
+                    <span class="text-xs bg-orange-100 px-2 py-1 rounded" id="transportTotal">0 SEK</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <!-- Address Row -->
+                <div class="bg-slate-50 p-3 rounded-lg mb-3 text-sm">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-building text-blue-500 w-5"></i>
+                        <span class="text-slate-500" data-i18n="from">Från</span>:
+                        <span id="companyAddrDisplay" class="font-medium text-slate-700">-</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fas fa-user text-green-500 w-5"></i>
+                        <span class="text-slate-500" data-i18n="to">Till</span>:
+                        <span id="clientAddrDisplay" class="font-medium text-slate-700">-</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-3">
+                    <div><label class="text-xs text-slate-500" data-i18n="distance">Avstånd (km)</label><input
+                            type="number" id="transportKm" class="input-sm" oninput="calcAll()"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="trips">Antal resor</label><input type="number"
+                            id="transportTrips" value="2" class="input-sm" oninput="calcAll()"></div>
+                    <div><label class="text-xs text-slate-500" data-i18n="costPerKm">Kostnad/km</label>
+                        <div class="input-sm bg-slate-100 text-slate-600" id="transportRateDisplay">15 SEK</div>
+                    </div>
+                    <div class="flex items-end"><span class="text-sm font-bold text-orange-600" id="transportCalc">0
+                            SEK</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Disposal -->
+        <div class="section">
+            <div class="section-header bg-red-50 text-red-700 border-l-red-500">
+                <span><i class="fas fa-dumpster mr-2"></i><span data-i18n="disposal">Avfallshantering</span></span>
+                <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-1 text-xs cursor-pointer">
+                        <input type="checkbox" id="includeDisposal" checked onchange="calcAll()" class="accent-red-500">
+                        <span data-i18n="includeInQuote">Inkludera</span>
+                    </label>
+                    <span class="text-xs bg-red-100 px-2 py-1 rounded" id="disposalTotal">0 SEK</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs text-slate-500" data-i18n="containers">Antal containrar</label><input
+                            type="number" id="disposalContainers" value="1" class="input-sm" oninput="calcAll()">
+                    </div>
+                    <div class="flex items-end"><span class="text-sm font-bold text-red-600" id="disposalCalc">0
+                            SEK</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="section">
+            <div class="section-header bg-slate-50 text-slate-600 border-l-slate-400">
+                <span><i class="fas fa-sticky-note mr-2"></i>Anteckningar</span>
+            </div>
+            <div class="section-body">
+                <textarea id="notes" rows="2" class="input-sm w-full" placeholder="Övriga anteckningar..."></textarea>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary-card">
+            <div class="summary-row"><span>Arbete</span><span id="sumLabor">0 SEK</span></div>
+            <div class="summary-row"><span>Material</span><span id="sumMaterial">0 SEK</span></div>
+            <div class="summary-row"><span>Transport</span><span id="sumTransport">0 SEK</span></div>
+            <div class="summary-row"><span>Avfall</span><span id="sumDisposal">0 SEK</span></div>
+            <div class="summary-row" style="border-top: 1px solid rgba(255,255,255,0.3);padding-top:8px;">
+                <span>Delsumma</span><span id="sumSubtotal">0 SEK</span>
+            </div>
+            <div class="summary-row"><span>Moms (<span id="vatPct">25</span>%)</span><span id="sumVat">0 SEK</span>
+            </div>
+            <div class="summary-row total"><span>TOTALT inkl. moms</span><span id="sumTotal">0 SEK</span></div>
+            <div class="rot-row">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="font-bold">ROT-avdrag (<span id="rotPct">30</span>%)</p>
+                        <p class="text-xs text-green-100">Tillämpas på arbetskostnad</p>
+                    </div>
+                    <span class="text-xl font-bold" id="sumRot">-0 SEK</span>
+                </div>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-green-400">
+                    <span class="font-bold text-lg">ATT BETALA:</span>
+                    <span class="text-2xl font-bold" id="sumFinal">0 SEK</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Next Step Button -->
+        <div class="mt-6 text-center flex justify-center gap-4 flex-wrap">
+            <button onclick="saveQuoteToList()"
+                class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4 rounded-xl text-lg font-bold hover:from-blue-600 hover:to-blue-700 shadow-lg transition transform hover:scale-105">
+                <i class="fas fa-save mr-2"></i>Spara offert
+            </button>
+            <button onclick="showPreview()"
+                class="bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-xl text-lg font-bold hover:from-green-600 hover:to-green-700 shadow-lg transition transform hover:scale-105">
+                <i class="fas fa-arrow-right mr-2"></i>Förhandsvisning
+            </button>
+        </div>
+    </div>
+    </div>
+
+    <!-- Preview Modal (outside no-print container) -->
+    <div id="previewModal" class="fixed inset-0 bg-black/70 z-50 hidden overflow-auto py-6">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-3 px-4 no-print">
+                <h2 class="text-white font-bold">Förhandsvisning Offert</h2>
+                <div class="flex gap-2">
+                    <button onclick="sendEmail()" class="bg-blue-600 text-white px-4 py-2 rounded font-bold text-sm"><i
+                            class="fas fa-envelope mr-1"></i>Skicka E-post</button>
+                    <button onclick="savePDF()" class="bg-purple-600 text-white px-4 py-2 rounded font-bold text-sm"><i
+                            class="fas fa-file-pdf mr-1"></i>Spara PDF</button>
+                    <button onclick="window.print()"
+                        class="bg-green-600 text-white px-4 py-2 rounded font-bold text-sm"><i
+                            class="fas fa-print mr-1"></i>Skriv ut</button>
+                    <button onclick="closePreview()"
+                        class="bg-slate-600 text-white px-4 py-2 rounded font-bold text-sm"><i
+                            class="fas fa-times mr-1"></i>Stäng</button>
+                </div>
+            </div>
+            <div class="paper" id="printArea"></div>
+        </div>
+    </div>
+
+    <script>
+        let settings = {};
+        let currency = 'SEK';
+        let selected = { work: {}, materials: {} };
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+        let isImportMode = false;
+
+        // UI Translations
+        const uiTranslations = {
+            sv: {
+                // Section headers
+                customerInfo: '1. Kundinformation',
+                dimensions: 'Mått',
+                detailsDeductions: 'Detaljer & Avdrag',
+                // Labels
+                name: 'Namn', address: 'Adress', cityZip: 'Postnr/Stad', phone: 'Telefon', email: 'E-post', workType: 'Arbetstyp',
+                length: 'Längd (m)', width: 'Bredd (m)', height: 'Höjd (m)', walls: 'Väggar', floor: 'Golv',
+                doorH: 'Dörr H (m)', doorW: 'Dörr B (m)', doorArea: 'Dörrarea (DA)',
+                winH: 'Fönster H (m)', winW: 'Fönster B (m)', winArea: 'Fönsterarea (WA)',
+                innerCorners: 'Innerhörn (IC)', outerCorners: 'Ytterhörn (OC)',
+                pipe1: 'Rör 10-20 (P1)', pipe2: 'Rör 32-55 (P2)', wcPipe: 'WC Avl. (P3)', drain: 'Golvbrunn (FD)', other: 'Övriga avdrag',
+                // Summary
+                summary: 'Summering', laborCost: 'Arbetskostnad', materialCost: 'Materialkostnad', subtotal: 'Delsumma',
+                transport: 'Transport', transportKm: 'km', rotDeduction: 'ROT-avdrag', total: 'Totalt att betala',
+                // Transport & Disposal
+                distance: 'Avstånd (km)', trips: 'Antal resor', costPerKm: 'Kostnad/km', from: 'Från', to: 'Till',
+                disposal: 'Avfallshantering', containers: 'Antal containrar', includeInQuote: 'Inkludera i offert',
+                // Buttons
+                preview: 'Förhandsvisning', previewTitle: 'Förhandsvisning Offert',
+                sendEmail: 'Skicka E-post', savePdf: 'Spara PDF', print: 'Skriv ut', close: 'Stäng',
+                nextStep: 'Nästa steg - Förhandsvisning', newQuote: 'Ny Offert',
+                // Categories
+                cat_demolition: '2. Rivning', cat_preparation: '3. Förarbete', cat_waterproofing: '4. Tätskikt',
+                cat_ceiling: '5. Tak/Målning', cat_fixtures: '6. Montage', cat_plumbing: '7. VVS',
+                cat_electrical: '8. El', cat_other: '9. Övrigt'
+            },
+            en: {
+                customerInfo: '1. Customer Information',
+                dimensions: 'Dimensions',
+                detailsDeductions: 'Details & Deductions',
+                name: 'Name', address: 'Address', cityZip: 'City/ZIP', phone: 'Phone', email: 'Email', workType: 'Work Type',
+                length: 'Length (m)', width: 'Width (m)', height: 'Height (m)', walls: 'Walls', floor: 'Floor',
+                doorH: 'Door H (m)', doorW: 'Door W (m)', doorArea: 'Door Area (DA)',
+                winH: 'Window H (m)', winW: 'Window W (m)', winArea: 'Window Area (WA)',
+                innerCorners: 'Inner Corners (IC)', outerCorners: 'Outer Corners (OC)',
+                pipe1: 'Pipe 10-20 (P1)', pipe2: 'Pipe 32-55 (P2)', wcPipe: 'WC Drain (P3)', drain: 'Floor Drain (FD)', other: 'Other deductions',
+                summary: 'Summary', laborCost: 'Labor Cost', materialCost: 'Material Cost', subtotal: 'Subtotal',
+                transport: 'Transport', transportKm: 'km', rotDeduction: 'ROT Deduction', total: 'Total to Pay',
+                // Transport & Disposal
+                distance: 'Distance (km)', trips: 'Number of trips', costPerKm: 'Cost/km', from: 'From', to: 'To',
+                disposal: 'Waste Disposal', containers: 'Number of containers', includeInQuote: 'Include in quote',
+                preview: 'Preview', previewTitle: 'Quote Preview',
+                sendEmail: 'Send Email', savePdf: 'Save PDF', print: 'Print', close: 'Close',
+                nextStep: 'Next Step - Preview', newQuote: 'New Quote',
+                cat_demolition: '2. Demolition', cat_preparation: '3. Preparation', cat_waterproofing: '4. Waterproofing',
+                cat_ceiling: '5. Ceiling/Painting', cat_fixtures: '6. Fixtures', cat_plumbing: '7. Plumbing',
+                cat_electrical: '8. Electrical', cat_other: '9. Other'
+            },
+            ro: {
+                customerInfo: '1. Informații Client',
+                dimensions: 'Dimensiuni',
+                detailsDeductions: 'Detalii & Deduceri',
+                name: 'Nume', address: 'Adresă', cityZip: 'Oraș/Cod', phone: 'Telefon', email: 'Email', workType: 'Tip Lucrare',
+                length: 'Lungime (m)', width: 'Lățime (m)', height: 'Înălțime (m)', walls: 'Pereți', floor: 'Podea',
+                doorH: 'Ușă H (m)', doorW: 'Ușă L (m)', doorArea: 'Arie Ușă (DA)',
+                winH: 'Fereastră H (m)', winW: 'Fereastră L (m)', winArea: 'Arie Fereastră (WA)',
+                innerCorners: 'Colțuri Int. (IC)', outerCorners: 'Colțuri Ext. (OC)',
+                pipe1: 'Țeavă 10-20 (P1)', pipe2: 'Țeavă 32-55 (P2)', wcPipe: 'Scurgere WC (P3)', drain: 'Sifon Podea (FD)', other: 'Alte deduceri',
+                summary: 'Rezumat', laborCost: 'Cost Manoperă', materialCost: 'Cost Material', subtotal: 'Subtotal',
+                transport: 'Transport', transportKm: 'km', rotDeduction: 'Deducere ROT', total: 'Total de Plată',
+                // Transport & Disposal
+                distance: 'Distanță (km)', trips: 'Număr călătorii', costPerKm: 'Cost/km', from: 'De la', to: 'La',
+                disposal: 'Gestiune Deșeuri', containers: 'Număr containere', includeInQuote: 'Include în ofertă',
+                preview: 'Previzualizare', previewTitle: 'Previzualizare Ofertă',
+                sendEmail: 'Trimite Email', savePdf: 'Salvează PDF', print: 'Printează', close: 'Închide',
+                nextStep: 'Pasul Următor - Previzualizare', newQuote: 'Ofertă Nouă',
+                cat_demolition: '2. Demolare', cat_preparation: '3. Pregătire', cat_waterproofing: '4. Hidroizolație',
+                cat_ceiling: '5. Tavan/Vopsit', cat_fixtures: '6. Montaj', cat_plumbing: '7. Instalații',
+                cat_electrical: '8. Electricitate', cat_other: '9. Altele'
+            }
+        };
+
+        function getT() { return uiTranslations[currentLang] || uiTranslations.sv; }
+
+        const categoryConfig = {
+            demolition: { color: 'red', icon: 'fa-hammer', nameKey: 'cat_demolition' },
+            preparation: { color: 'orange', icon: 'fa-tools', nameKey: 'cat_preparation' },
+            waterproofing: { color: 'blue', icon: 'fa-droplet', nameKey: 'cat_waterproofing' },
+            ceiling: { color: 'purple', icon: 'fa-paint-roller', nameKey: 'cat_ceiling' },
+            fixtures: { color: 'green', icon: 'fa-sink', nameKey: 'cat_fixtures' },
+            plumbing: { color: 'cyan', icon: 'fa-faucet', nameKey: 'cat_plumbing' },
+            electrical: { color: 'yellow', icon: 'fa-bolt', nameKey: 'cat_electrical' },
+            other: { color: 'gray', icon: 'fa-box', nameKey: 'cat_other' }
+        };
+
+        // Helper to get translated category name
+        function getCategoryName(catKey) {
+            const cfg = categoryConfig[catKey];
+            return cfg ? getT()[cfg.nameKey] || cfg.nameKey : catKey;
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('constructPro_settings');
+            if (saved) {
+                try { settings = JSON.parse(saved); } catch (e) { settings = {}; }
+            }
+            if (!settings.workItems) settings.workItems = {};
+            if (!settings.materials) settings.materials = [];
+            if (!settings.costs) settings.costs = { rotPercent: 30, vatPercent: 25, transportPerKm: 15, transportMin: 500, disposalContainer: 2500 };
+            if (settings.company) {
+                if (settings.company.name) document.getElementById('navCompName').innerText = settings.company.name;
+                if (settings.company.logo) document.getElementById('navLogo').innerHTML = `<img src="${settings.company.logo}" class="h-10 object-contain">`;
+            }
+            document.getElementById('transportKm').value = settings.costs.transportDefaultKm || 20;
+            document.getElementById('rotPct').innerText = settings.costs.rotPercent;
+            document.getElementById('vatPct').innerText = settings.costs.vatPercent;
+
+            // Clear old import data only (keep dimensions for sync with Calculator)
+            localStorage.removeItem('constructPro_quoteImport');
+
+            // Load calculator data (this is the main item list)
+            loadCalculatorItems();
+
+            // Update transport rate display
+            document.getElementById('transportRateDisplay').innerText = calculatorTransportCostPerKm + ' SEK';
+
+            // Update company address display
+            if (settings.company && settings.company.address) {
+                document.getElementById('companyAddrDisplay').innerText = settings.company.address;
+            }
+
+            checkForImports(); // Check for calculator imports
+
+            // Load dimensions from shared storage (Bidirectional Sync)
+            const savedDims = localStorage.getItem('constructPro_oferta_dimensions');
+            if (savedDims) {
+                try {
+                    const d = JSON.parse(savedDims);
+                    // Main Dims
+                    document.getElementById('dimLen').value = d.l || '';
+                    document.getElementById('dimWid').value = d.w || '';
+                    document.getElementById('dimHei').value = d.h || '';
+
+                    // Update Area Text
+                    if (d.l && d.w) document.getElementById('floorArea').innerText = (d.l * d.w).toFixed(1) + ' m²';
+                    if (d.l && d.w && d.h) document.getElementById('wallArea').innerText = ((d.l + d.w) * 2 * d.h).toFixed(1) + ' m²';
+
+                    // Details
+                    if (d.details) {
+                        if (d.details.corn) {
+                            document.getElementById('cornIn').value = d.details.corn.i || '';
+                            document.getElementById('cornOut').value = d.details.corn.o || '';
+                        }
+                        if (d.details.pipes) {
+                            document.getElementById('pipe1').value = d.details.pipes.p1 || '';
+                            document.getElementById('pipe2').value = d.details.pipes.p2 || '';
+                            document.getElementById('pipe3').value = d.details.pipes.p3 || '';
+                            document.getElementById('drain').value = d.details.pipes.fd || '';
+                        }
+                        if (d.details.doors && d.details.doors[0]) {
+                            document.getElementById('doorH').value = d.details.doors[0].h || '';
+                            document.getElementById('doorW').value = d.details.doors[0].w || '';
+                            document.getElementById('calcDA').innerText = ((d.details.doors[0].h || 0) * (d.details.doors[0].w || 0)).toFixed(2);
+                        }
+                        if (d.details.windows && d.details.windows[0]) {
+                            document.getElementById('winH').value = d.details.windows[0].h || '';
+                            document.getElementById('winW').value = d.details.windows[0].w || '';
+                            document.getElementById('calcWA').innerText = ((d.details.windows[0].h || 0) * (d.details.windows[0].w || 0)).toFixed(2);
+                        }
+                    }
+                } catch (e) { console.error('Error loading dims', e); }
+            }
+
+            recalculateQuantities(); // Calculate quantities based on loaded dimensions
+            renderWorkSections();
+            renderMaterials();
+            renderQuotePresets(); // Populate arbetstyp dropdown
+            calcAll();
+
+            // Load clients for import dropdown
+            loadClients();
+        }
+
+        // ===== CLIENT IMPORT & SYNC =====
+        let allClients = [];
+
+        function loadClients() {
+            try {
+                allClients = JSON.parse(localStorage.getItem('constructPro_customers') || '[]');
+            } catch (e) { allClients = []; }
+
+            const select = document.getElementById('clientSelect');
+            select.innerHTML = '<option value="">-- Skriv manuellt eller välj --</option>';
+
+            allClients.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.id;
+                opt.textContent = `${c.name}${c.city ? ' (' + c.city + ')' : ''}`;
+                select.appendChild(opt);
+            });
+        }
+
+        function selectClient(clientId) {
+            if (!clientId) return;
+
+            const client = allClients.find(c => c.id === clientId);
+            if (!client) return;
+
+            // Auto-fill form fields
+            document.getElementById('clName').value = client.name || '';
+            document.getElementById('clAddr').value = client.address || '';
+            document.getElementById('clCity').value = `${client.zip || ''} ${client.city || ''}`.trim();
+            document.getElementById('clPhone').value = client.phone || '';
+            document.getElementById('clEmail').value = client.email || '';
+            document.getElementById('selectedClientId').value = client.id;
+
+            // Update client address display in transport section
+            updateClientAddressDisplay();
+        }
+
+        function updateClientAddressDisplay() {
+            const addr = document.getElementById('clAddr').value || '';
+            const city = document.getElementById('clCity').value || '';
+            const fullAddr = [addr, city].filter(x => x).join(', ');
+            document.getElementById('clientAddrDisplay').innerText = fullAddr || '-';
+        }
+
+        function clearClientSelection() {
+            document.getElementById('clientSelect').value = '';
+            document.getElementById('selectedClientId').value = '';
+            document.getElementById('clName').value = '';
+            document.getElementById('clAddr').value = '';
+            document.getElementById('clCity').value = '';
+            document.getElementById('clPhone').value = '';
+            document.getElementById('clEmail').value = '';
+        }
+
+        function saveClientOnQuote() {
+            const selectedId = document.getElementById('selectedClientId').value;
+            const clientName = document.getElementById('clName').value.trim();
+
+            // If no client selected and name is entered, create new client
+            if (!selectedId && clientName) {
+                const cityZip = document.getElementById('clCity').value.trim();
+                const parts = cityZip.split(' ');
+                const zip = parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+                const city = parts.length > 0 ? parts[parts.length - 1] : '';
+
+                const newClient = {
+                    id: 'cust_' + Date.now(),
+                    name: clientName,
+                    phone: document.getElementById('clPhone').value.trim(),
+                    email: document.getElementById('clEmail').value.trim(),
+                    address: document.getElementById('clAddr').value.trim(),
+                    zip: zip,
+                    city: city,
+                    notes: '',
+                    status: 'active',
+                    createdAt: new Date().toISOString(),
+                    offers: []
+                };
+
+                allClients.push(newClient);
+                localStorage.setItem('constructPro_customers', JSON.stringify(allClients));
+                document.getElementById('selectedClientId').value = newClient.id;
+
+                console.log('New client saved:', newClient.name);
+                return newClient.id;
+            }
+
+            return selectedId;
+        }
+
+        // Current quote ID (if editing existing)
+        let currentQuoteId = null;
+
+        function saveQuoteToList() {
+            // Ensure client is saved first
+            const clientId = saveClientOnQuote();
+            const clientName = document.getElementById('clName').value.trim();
+
+            if (!clientName) {
+                alert('Vänligen ange kundnamn innan du sparar offerten.');
+                return;
+            }
+
+            // Collect totals from the summary section
+            const parseNum = (id) => parseFloat(document.getElementById(id).innerText.replace(/[^\d]/g, '')) || 0;
+
+            const totals = {
+                labor: parseNum('sumLabor'),
+                material: parseNum('sumMaterial'),
+                transport: parseNum('sumTransport'),
+                disposal: parseNum('sumDisposal'),
+                subtotal: parseNum('sumSubtotal'),
+                vat: parseNum('sumVat'),
+                total: parseNum('sumTotal'),
+                rot: parseNum('sumRot'),
+                final: parseNum('sumFinal')
+            };
+
+            // Collect selected items
+            const items = [];
+            Object.keys(selected.work).forEach(key => {
+                const sel = selected.work[key];
+                if (sel.checked) {
+                    const catItems = settings.workItems[sel.cat] || [];
+                    const item = catItems[sel.index];
+                    if (item) {
+                        items.push({
+                            name: item.name,
+                            unit: item.unit,
+                            qty: sel.qty || 1,
+                            laborPrice: item.laborPrice || 0,
+                            materialPrice: item.materialPrice || 0
+                        });
+                    }
+                }
+            });
+
+            // Load existing quotes
+            let quotes = [];
+            try {
+                quotes = JSON.parse(localStorage.getItem('constructPro_quotes') || '[]');
+            } catch (e) { quotes = []; }
+
+            // Create or update quote
+            const quoteData = {
+                id: currentQuoteId || 'quote_' + Date.now(),
+                clientId: clientId,
+                clientName: clientName,
+                clientAddress: document.getElementById('clAddr').value.trim(),
+                clientCity: document.getElementById('clCity').value.trim(),
+                clientPhone: document.getElementById('clPhone').value.trim(),
+                clientEmail: document.getElementById('clEmail').value.trim(),
+                workType: document.getElementById('clType')?.selectedOptions[0]?.text || 'Renovering',
+                status: 'draft',
+                items: items,
+                totals: totals,
+                notes: document.getElementById('notes').value.trim(),
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Check if updating existing quote
+            const existingIdx = quotes.findIndex(q => q.id === currentQuoteId);
+            if (existingIdx >= 0) {
+                quoteData.status = quotes[existingIdx].status; // Keep existing status
+                quoteData.createdAt = quotes[existingIdx].createdAt; // Keep original date
+                quotes[existingIdx] = quoteData;
+            } else {
+                quotes.push(quoteData);
+                currentQuoteId = quoteData.id;
+            }
+
+            localStorage.setItem('constructPro_quotes', JSON.stringify(quotes));
+
+            alert('Offert sparad! Du kan nu se den på Offerter-sidan.');
+        }
+
+        // ===== QUOTE PRESETS (Arbetstyp Templates) =====
+        let quotePresets = [];
+
+        function loadQuotePresetsFromStorage() {
+            const saved = localStorage.getItem('constructPro_quotePresets');
+            if (saved) {
+                try { quotePresets = JSON.parse(saved); } catch (e) { quotePresets = []; }
+            }
+        }
+
+        function saveQuotePresetsToStorage() {
+            localStorage.setItem('constructPro_quotePresets', JSON.stringify(quotePresets));
+        }
+
+        function renderQuotePresets() {
+            loadQuotePresetsFromStorage();
+            const select = document.getElementById('clType');
+            // Clear existing options except first placeholder
+            select.innerHTML = '<option value="">-- Välj mall --</option>';
+
+            quotePresets.forEach((preset, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = preset.name;
+                select.appendChild(opt);
+            });
+
+            // Add "Custom" option for manual entry
+            const customOpt = document.createElement('option');
+            customOpt.value = 'custom';
+            customOpt.textContent = '+ Anpassad...';
+            select.appendChild(customOpt);
+        }
+
+        function saveQuotePreset() {
+            const name = prompt('Namn på mallen (t.ex. "Badrumsrenovering"):');
+            if (!name) return;
+
+            // Save current checklist selections
+            const preset = {
+                name: name,
+                selections: JSON.parse(JSON.stringify(selected.work)),
+                workItems: JSON.parse(JSON.stringify(settings.workItems))
+            };
+
+            loadQuotePresetsFromStorage();
+            quotePresets.push(preset);
+            saveQuotePresetsToStorage();
+            renderQuotePresets();
+
+            // Select the newly saved preset
+            document.getElementById('clType').value = quotePresets.length - 1;
+            alert(`Mall "${name}" sparad!`);
+        }
+
+        function loadQuotePreset(value) {
+            if (value === '' || value === 'custom') {
+                // No preset selected - just use Calculator data
+                loadCalculatorTotals();
+                return;
+            }
+
+            loadQuotePresetsFromStorage();
+            const idx = parseInt(value);
+            if (isNaN(idx) || !quotePresets[idx]) return;
+
+            // MASTER-SLAVE ARCHITECTURE: WIPE MEASUREMENTS ON PRESET CHANGE
+            wipeDimensions();
+
+            const preset = quotePresets[idx];
+
+            // Load preset's work items for UI structure only
+            const items = JSON.parse(JSON.stringify(preset.workItems));
+
+            // GRAFT MISSING DATA: Get time/formula/materialPrice from Calculator
+            try {
+                const calcRaw = localStorage.getItem('constructPro_calculator');
+                if (calcRaw) {
+                    const calcData = JSON.parse(calcRaw);
+                    if (calcData.categories) {
+                        // For each preset item, find matching Calculator item and graft missing data
+                        Object.keys(items).forEach(cat => {
+                            items[cat].forEach(item => {
+                                // Try to find a matching item in Calculator by name
+                                for (const calcCat of calcData.categories) {
+                                    const match = calcCat.items.find(i =>
+                                        i.material === item.name ||
+                                        i.material === item.material ||
+                                        item.name?.includes(i.material) ||
+                                        i.material?.includes(item.name)
+                                    );
+                                    if (match) {
+                                        // Graft missing properties
+                                        if (!item.time && match.time) item.time = match.time;
+                                        if (!item.formula && match.formula) item.formula = match.formula;
+                                        if (!item.materialPrice && match.materialPrice) item.materialPrice = match.materialPrice;
+                                        break;
+                                    }
+                                }
+                            });
+                        });
+                    }
+                }
+            } catch (e) { console.error("Error grafting Calculator data to preset:", e); }
+
+            settings.workItems = items;
+            selected.work = JSON.parse(JSON.stringify(preset.selections));
+
+            renderWorkSections();
+            recalculateQuantities();
+
+            // CRITICAL: Always use Calculator data for price calculations
+            // This ensures presets and non-presets calculate the same way
+            calcAll();
+        }
+
+        function deleteQuotePreset() {
+            const select = document.getElementById('clType');
+            const value = select.value;
+
+            if (value === '' || value === 'custom') {
+                alert('Vänligen välj en mall att radera.');
+                return;
+            }
+
+            const idx = parseInt(value);
+            loadQuotePresetsFromStorage();
+
+            if (isNaN(idx) || !quotePresets[idx]) return;
+
+            if (confirm(`Är du säker på att du vill radera mallen "${quotePresets[idx].name}"?`)) {
+                quotePresets.splice(idx, 1);
+                saveQuotePresetsToStorage();
+                renderQuotePresets();
+                select.value = ''; // Reset selection
+
+                // UX IMPROVEMENT: Wipe safe
+                try {
+                    if (typeof wipeDimensions === 'function') wipeDimensions();
+                    selected = { work: {}, materials: {} };
+                    renderWorkSections();
+                    calcAll();
+                } catch (e) { console.error("Cleanup error", e); }
+
+                alert('Mall raderad.');
+            }
+        }
+
+        // Load categories directly from the calculator's localStorage
+        let calculatorTransportCostPerKm = 15; // Default
+
+        function loadCalculatorItems() {
+            const calcData = localStorage.getItem('constructPro_calculator');
+            if (!calcData) return;
+
+            try {
+                const data = JSON.parse(calcData);
+
+                // Read transport cost from calculator
+                if (data.transportCostPerKm) {
+                    calculatorTransportCostPerKm = data.transportCostPerKm;
+                }
+
+                if (!data.categories) return;
+
+                // Convert calculator categories to work items format
+                settings.workItems = {};
+
+                data.categories.forEach(cat => {
+                    // Map calculator category names to quote category keys
+                    const catKey = mapCategoryToKey(cat.name);
+                    if (!settings.workItems[catKey]) settings.workItems[catKey] = [];
+
+                    // Get overhead settings (252% labor overhead = 3.52x multiplier)
+                    const laborOverhead = settings.costs?.laborOverhead || 252;
+                    const laborMultiplier = 1 + (laborOverhead / 100);  // 3.52
+
+                    cat.items.forEach(item => {
+                        // Apply overhead to labor price: time × rate × overhead multiplier
+                        const baseLaborPrice = (item.time || 0) * (data.laborRate || 450);
+                        const laborPriceWithOverhead = Math.round(baseLaborPrice * laborMultiplier);
+
+                        const newItem = {
+                            name: item.material,
+                            unit: item.unit,
+                            laborPrice: laborPriceWithOverhead,  // Now includes 252% overhead
+                            materialPrice: item.materialPrice || 0,
+                            baseLaborPrice: baseLaborPrice,  // Store base for reference
+                            importedQty: 0,  // Always start at 0 - formula recalculation will set correct value
+                            isImport: false,
+                            formula: item.formula || '',
+                            time: item.time || 0,
+                            calcId: item.id,
+                            selected: item.selected || false
+                        };
+                        settings.workItems[catKey].push(newItem);
+
+                        // If item is selected in calculator, auto-select it in quote
+                        if (newItem.selected) {
+                            const newIdx = settings.workItems[catKey].length - 1;
+                            const key = `${catKey}-${newIdx}`;
+                            selected.work[key] = {
+                                checked: true,
+                                qty: newItem.importedQty || 0,
+                                cat: catKey,
+                                index: newIdx
+                            };
+                        }
+                    });
+                });
+            } catch (e) {
+                console.error('Error loading calculator data:', e);
+            }
+        }
+
+        // Map calculator category name to quote category key
+        function mapCategoryToKey(catName) {
+            const name = catName.toLowerCase();
+            if (name.includes('rivning')) return 'demolition';
+            if (name.includes('förarbete') || name.includes('forarbete')) return 'preparation';
+            if (name.includes('tätskikt') || name.includes('tatskikt')) return 'waterproofing';
+            if (name.includes('kakel') || name.includes('klinker') || name.includes('plattsättning')) return 'waterproofing';
+            if (name.includes('tak') || name.includes('målning')) return 'ceiling';
+            if (name.includes('montage')) return 'fixtures';
+            if (name.includes('vvs')) return 'plumbing';
+            if (name.includes('el')) return 'electrical';
+            return 'other';
+        }
+
+        function checkForImports() {
+            const importData = localStorage.getItem('constructPro_quoteImport');
+            if (importData) {
+                try {
+                    const data = JSON.parse(importData);
+                    const items = data.items;
+
+                    if (items && items.length > 0) {
+                        isImportMode = true;
+
+                        // Clear existing selection and items for this session (simulating "only selected items")
+                        settings.workItems = {};
+                        settings.materials = [];
+                        selected.work = {};
+                        selected.materials = {};
+
+                        let importedCount = 0;
+
+                        items.forEach(item => {
+                            // Find matching category or create 'other'
+                            let targetCatKey = 'other';
+                            Object.keys(categoryConfig).forEach(catKey => {
+                                const catName = getCategoryName(catKey).toLowerCase();
+                                if (catName.includes(item.category.toLowerCase()) || item.category.toLowerCase().includes(catKey)) {
+                                    targetCatKey = catKey;
+                                }
+                            });
+
+                            if (!settings.workItems[targetCatKey]) settings.workItems[targetCatKey] = [];
+
+                            // Get overhead settings
+                            const laborOverhead = settings.costs?.laborOverhead || 252;
+                            const laborMultiplier = 1 + (laborOverhead / 100);
+
+                            // Apply overhead to labor price
+                            const baseLaborPrice = item.laborPrice || 0;
+                            const laborPriceWithOverhead = Math.round(baseLaborPrice * laborMultiplier);
+
+                            // Add to settings list
+                            settings.workItems[targetCatKey].push({
+                                name: item.name,
+                                unit: item.unit,
+                                laborPrice: laborPriceWithOverhead,
+                                materialPrice: item.materialPrice || 0,
+                                baseLaborPrice: baseLaborPrice,
+                                importedQty: 0,  // Always start at 0 - formula will recalculate
+                                isImport: true,
+                                formula: item.formula || '',
+                                time: item.time || 0
+                            });
+
+                            const idx = settings.workItems[targetCatKey].length - 1;
+                            const key = `${targetCatKey}-${idx}`;
+
+                            // Pre-select
+                            selected.work[key] = {
+                                checked: true,
+                                cat: targetCatKey,
+                                index: idx,
+                                qty: 0  // Start at 0 - formula will recalculate
+                            };
+                            importedCount++;
+                        });
+
+                        alert(`Importerade ${importedCount} artiklar från kalkylatorn!`);
+                        localStorage.removeItem('constructPro_quoteImport');
+
+                        // Hide dimensions input if in import mode as quantities are fixed
+                        document.getElementById('dimensionsSection').classList.add('hidden');
+
+                        if (data.terms) {
+                            settings.terms = data.terms;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Import error", e);
+                }
+            }
+        }
+
+        function renderWorkSections() {
+            const container = document.getElementById('workSections');
+            container.innerHTML = '';
+            Object.keys(categoryConfig).forEach(cat => {
+                const cfg = categoryConfig[cat];
+                const items = settings.workItems[cat] || [];
+                if (items.length === 0) return; // Skip empty sections
+                const catName = getCategoryName(cat);
+
+                container.innerHTML += `
+                    <div class="section">
+                        <div class="section-header bg-${cfg.color}-50 text-${cfg.color}-700 border-l-${cfg.color}-500" onclick="toggleSection(this)">
+                            <span><i class="fas ${cfg.icon} mr-2"></i>${catName}</span>
+                            <span class="text-xs bg-${cfg.color}-100 px-2 py-1 rounded" id="sub-${cat}">0 ${currency}</span>
+                        </div>
+                        <div class="section-body" id="cat-${cat}">
+                            ${items.map((item, i) => renderWorkRow(cat, item, i)).join('')}
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function renderWorkRow(cat, item, index) {
+            const key = `${cat}-${index}`;
+            const isChecked = selected.work[key]?.checked;
+            // Use selected qty first, then formula-calculated importedQty, default to 0 (not 1!)
+            const selectedQty = selected.work[key]?.qty;
+            const qty = selectedQty !== undefined ? selectedQty : (item.importedQty !== undefined ? item.importedQty : 0);
+            const labor = item.laborPrice || 0;
+            const mat = item.materialPrice || 0;
+            const totalUnit = labor + mat;
+            const formula = item.formula || '';
+            const time = item.time || 0;
+
+            // Build detail line with formula, time, labor, material
+            let detailLine = '';
+            if (item.isImport) {
+                const parts = [];
+                if (formula) parts.push(`Formel: ${formula}`);
+                if (time > 0) parts.push(`${time}h/enh`);
+                parts.push(`Arb: ${Math.round(labor)} kr`);
+                parts.push(`Mat: ${Math.round(mat)} kr`);
+                detailLine = parts.join(' | ');
+            }
+
+            return `
+                <div class="check-row ${isChecked ? 'checked' : ''}" data-key="${key}">
+                    <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleWork('${key}', this.checked, '${cat}', ${index})">
+                    <div class="flex flex-col">
+                        <span class="text-slate-700 font-medium">${item.name}</span>
+                        ${detailLine ? `<span class="text-[10px] text-slate-400">${detailLine}</span>` : ''}
+                    </div>
+                    <span class="price-cell">${Math.round(totalUnit * qty)} ${currency}</span>
+                </div>`;
+        }
+
+        function renderMaterials() {
+            // Not used in import mode usually, but keep for legacy
+            if (isImportMode) {
+                document.getElementById('materialsSection').classList.add('hidden');
+                return;
+            }
+            // ... logic for materials rendering if needed ...
+        }
+
+        function getPrice(item) {
+            // Helper mostly for legacy items
+            return item['price' + currency] || item.priceSEK || 0;
+        }
+
+        function toggleWork(key, checked, cat, index) {
+            if (!selected.work[key]) selected.work[key] = { qty: settings.workItems[cat][index].importedQty || 1 };
+            selected.work[key].checked = checked;
+            selected.work[key].cat = cat;
+            selected.work[key].index = index;
+            document.querySelector(`[data-key="${key}"]`)?.classList.toggle('checked', checked);
+            calcAll();
+        }
+
+        function updateWorkQty(key, value) {
+            if (!selected.work[key]) selected.work[key] = { checked: false };
+            selected.work[key].qty = parseFloat(value) || 1;
+            calcAll();
+        }
+
+        function saveOfertaDimensions() {
+            const l = parseFloat(document.getElementById('dimLen').value) || 0;
+            const w = parseFloat(document.getElementById('dimWid').value) || 0;
+            const h = parseFloat(document.getElementById('dimHei').value) || 0;
+
+            const cornIn = parseFloat(document.getElementById('cornIn').value) || 0;
+            const cornOut = parseFloat(document.getElementById('cornOut').value) || 0;
+
+            const p1 = parseFloat(document.getElementById('pipe1').value) || 0;
+            const p2 = parseFloat(document.getElementById('pipe2').value) || 0;
+            const p3 = parseFloat(document.getElementById('pipe3').value) || 0;
+            const fd = parseFloat(document.getElementById('drain').value) || 0;
+
+            const doorH = parseFloat(document.getElementById('doorH').value) || 0;
+            const doorW = parseFloat(document.getElementById('doorW').value) || 0;
+
+            const winH = parseFloat(document.getElementById('winH').value) || 0;
+            const winW = parseFloat(document.getElementById('winW').value) || 0;
+
+            const data = {
+                l, w, h,
+                details: {
+                    corn: { i: cornIn, o: cornOut },
+                    pipes: { p1, p2, p3, fd },
+                    doors: [{ h: doorH, w: doorW }],
+                    windows: [{ h: winH, w: winW }]
+                },
+                timestamp: Date.now()
+            };
+            localStorage.setItem('constructPro_oferta_dimensions', JSON.stringify(data));
+        }
+
+        // NEW: Function to wipe all dimensions (Clean Slate)
+        function wipeDimensions() {
+            // 1. Clear UI
+            ['dimLen', 'dimWid', 'dimHei', 'cornIn', 'cornOut', 'pipe1', 'pipe2', 'pipe3', 'drain', 'doorH', 'doorW', 'winH', 'winW']
+                .forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+
+            document.getElementById('floorArea').innerText = '0.0 m²';
+            document.getElementById('wallArea').innerText = '0.0 m²';
+
+            // 2. Save Empty State to Storage (Triggers Calculator Clear)
+            const zeroState = {
+                l: 0, w: 0, h: 0,
+                details: {
+                    corn: { i: 0, o: 0 },
+                    pipes: { p1: 0, p2: 0, p3: 0, fd: 0 },
+                    doors: [],
+                    windows: []
+                },
+                timestamp: Date.now()
+            };
+            localStorage.setItem('constructPro_oferta_dimensions', JSON.stringify(zeroState));
+
+            // 3. Recalculate internals to 0
+            recalculateQuantities();
+            if (!isImportMode) calcAll();
+        }
+
+        function calcAreas() {
+            const l = parseFloat(document.getElementById('dimLen').value) || 0;
+            const w = parseFloat(document.getElementById('dimWid').value) || 0;
+            const h = parseFloat(document.getElementById('dimHei').value) || 0;
+            const floor = l * w;
+            const walls = (l + w) * 2 * h;
+            document.getElementById('floorArea').innerText = floor.toFixed(1) + ' m²';
+            document.getElementById('wallArea').innerText = walls.toFixed(1) + ' m²';
+
+            saveOfertaDimensions();
+            recalculateQuantities(); // Recalculate based on formulas
+            renderWorkSections(); // CRITICAL: Update UI immediately
+            if (!isImportMode) calcAll();
+        }
+
+        // Recalculate all item quantities based on Checklist dimensions and formulas
+        function recalculateQuantities() {
+            const l = parseFloat(document.getElementById('dimLen').value) || 0;
+            const w = parseFloat(document.getElementById('dimWid').value) || 0;
+            const h = parseFloat(document.getElementById('dimHei').value) || 0;
+
+            const doorH = parseFloat(document.getElementById('doorH').value) || 0;
+            const doorW = parseFloat(document.getElementById('doorW').value) || 0;
+            const winH = parseFloat(document.getElementById('winH').value) || 0;
+            const winW = parseFloat(document.getElementById('winW').value) || 0;
+
+            const cornIn = parseFloat(document.getElementById('cornIn').value) || 0;
+            const cornOut = parseFloat(document.getElementById('cornOut').value) || 0;
+            const p1 = parseFloat(document.getElementById('pipe1').value) || 0;
+            const p2 = parseFloat(document.getElementById('pipe2').value) || 0;
+            const p3 = parseFloat(document.getElementById('pipe3').value) || 0;
+            const fd = parseFloat(document.getElementById('drain').value) || 0;
+
+            // Calculate derived values
+            const G = l * w; // Floor/Golv
+            const V = (l + w) * 2 * h; // Walls/Väggar
+            const O = (l + w) * 2; // Perimeter/Omkrets
+            const DA = doorH * doorW; // Door Area
+            const WA = winH * winW; // Window Area
+            const IC = cornIn;
+            const OC = cornOut;
+            const P1 = p1;
+            const P2 = p2;
+            const P3 = p3;
+            const FD = fd;
+
+            // Update all work items with formulas
+            Object.keys(settings.workItems).forEach(cat => {
+                const items = settings.workItems[cat] || [];
+                items.forEach((item, idx) => {
+                    if (item.formula) {
+                        try {
+                            const formula = item.formula.toUpperCase();
+                            let qty = 0;
+
+                            // Robust Formula Evaluation (matching Calculator logic)
+                            // Variables map
+                            const vars = {
+                                'FLOOR': G, 'GOLV': G, 'WALL': V, 'VÄGG': V, 'PERIM': O, 'OMKRETS': O,
+                                'L': l, 'W': w, 'B': w, 'H': h,
+                                'G': G, 'V': V, 'O': O,
+                                'DA': DA, 'WA': WA,
+                                'IC': IC, 'OC': OC,
+                                'P1': P1, 'P2': P2, 'P3': P3, 'FD': FD
+                            };
+
+                            let expr = formula;
+                            // Replace known vars with values (using word boundary check)
+                            for (const [key, val] of Object.entries(vars)) {
+                                const regex = new RegExp(`\\b${key}\\b`, 'g');
+                                expr = expr.replace(regex, val);
+                            }
+
+                            // Eval safe-ish
+                            // Allow: numbers, ., +, -, *, /, (, ), and spaces
+                            if (/^[0-9\.\+\-\*\/\(\)\s]*$/.test(expr)) {
+                                try {
+                                    qty = parseFloat(eval(expr).toFixed(2));
+                                } catch (e) { qty = 0; }
+                            }
+
+                            item.importedQty = qty || 0;
+
+                            // Also update selected.work if this item is selected
+                            const key = `${cat}-${idx}`;
+                            if (selected.work[key]) {
+                                selected.work[key].qty = item.importedQty;
+                            }
+                        } catch (e) {
+                            item.importedQty = 0;
+                        }
+                    }
+                });
+            });
+        }
+
+        // CRITICAL: Load shared dimensions on startup
+        function loadDimensionsFromStorage() {
+            const saved = localStorage.getItem('constructPro_oferta_dimensions');
+            if (saved) {
+                try {
+                    const d = JSON.parse(saved);
+                    document.getElementById('dimLen').value = d.l || '';
+                    document.getElementById('dimWid').value = d.w || '';
+                    document.getElementById('dimHei').value = d.h || '';
+
+                    if (d.details) {
+                        if (d.details.corn) {
+                            document.getElementById('cornIn').value = d.details.corn.i || '';
+                            document.getElementById('cornOut').value = d.details.corn.o || '';
+                        }
+                        if (d.details.pipes) {
+                            document.getElementById('pipe1').value = d.details.pipes.p1 || '';
+                            document.getElementById('pipe2').value = d.details.pipes.p2 || '';
+                            document.getElementById('pipe3').value = d.details.pipes.p3 || '';
+                            document.getElementById('drain').value = d.details.pipes.fd || '';
+                        }
+                        if (d.details.doors && d.details.doors[0]) {
+                            document.getElementById('doorH').value = d.details.doors[0].h || '';
+                            document.getElementById('doorW').value = d.details.doors[0].w || '';
+                        }
+                        if (d.details.windows && d.details.windows[0]) {
+                            document.getElementById('winH').value = d.details.windows[0].h || '';
+                            document.getElementById('winW').value = d.details.windows[0].w || '';
+                        }
+                    }
+                    // Trigger calc to update UI
+                    recalculateQuantities();
+                    renderWorkSections();
+                    if (!isImportMode) calcAll();
+                } catch (e) { console.error("Error loading shared dimensions:", e); }
+            }
+        }
+
+        // Real-time Sync Listener (Checklist)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'constructPro_oferta_dimensions' && e.newValue) {
+                try {
+                    const d = JSON.parse(e.newValue);
+
+                    // Update Checklist Dims from Storage
+                    document.getElementById('dimLen').value = d.l || '';
+                    document.getElementById('dimWid').value = d.w || '';
+                    document.getElementById('dimHei').value = d.h || '';
+
+                    if (d.details) {
+                        if (d.details.corn) {
+                            document.getElementById('cornIn').value = d.details.corn.i || '';
+                            document.getElementById('cornOut').value = d.details.corn.o || '';
+                        }
+                        if (d.details.pipes) {
+                            document.getElementById('pipe1').value = d.details.pipes.p1 || '';
+                            document.getElementById('pipe2').value = d.details.pipes.p2 || '';
+                            document.getElementById('pipe3').value = d.details.pipes.p3 || '';
+                            document.getElementById('drain').value = d.details.pipes.fd || '';
+                        }
+                        if (d.details.doors && d.details.doors[0]) {
+                            document.getElementById('doorH').value = d.details.doors[0].h || '';
+                            document.getElementById('doorW').value = d.details.doors[0].w || '';
+                        }
+                        if (d.details.windows && d.details.windows[0]) {
+                            document.getElementById('winH').value = d.details.windows[0].h || '';
+                            document.getElementById('winW').value = d.details.windows[0].w || '';
+                        }
+                    }
+
+                    // Update UI and Recalculate - without triggering a save loop
+                    // We modify calcAreas slightly or just run logical parts
+                    const l = d.l || 0, w = d.w || 0, h = d.h || 0;
+                    const floor = l * w;
+                    const walls = (l + w) * 2 * h;
+                    document.getElementById('floorArea').innerText = floor.toFixed(1) + ' m²';
+                    document.getElementById('wallArea').innerText = walls.toFixed(1) + ' m²';
+
+                    recalculateQuantities();
+                    renderWorkSections(); // CRITICAL: Re-render rows to show refreshed prices!
+                    if (!isImportMode) calcAll();
+
+                } catch (err) { console.error(err); }
+            }
+        });
+
+        function calcAll() {
+            const costs = settings.costs || {};
+            let totalLabor = 0;
+            let totalMaterial = 0;
+
+            // Get pricing data from Calculator
+            let laborRate = 450;
+            let laborOverhead = settings.costs?.laborOverhead ?? 252;
+            let laborMultiplier = 1 + (laborOverhead / 100);
+
+            try {
+                const calcRaw = localStorage.getItem('constructPro_calculator');
+                if (calcRaw) {
+                    const calcData = JSON.parse(calcRaw);
+                    laborRate = calcData.laborRate || 450;
+                }
+            } catch (e) { console.error("Error reading Calculator data:", e); }
+
+            // Use CHECKLIST's selected.work for item selections
+            // Use settings.workItems for item details (which includes Calculator prices)
+            Object.keys(categoryConfig).forEach(cat => {
+                let catTotal = 0;
+                const items = settings.workItems[cat] || [];
+
+                Object.keys(selected.work).forEach(key => {
+                    const sel = selected.work[key];
+                    if (sel.checked && sel.cat === cat) {
+                        const item = items[sel.index];
+                        if (item) {
+                            // Use qty from selection or formula-calculated qty
+                            let qty = sel.qty ?? item.importedQty ?? 0;
+
+                            // Calculate labor using Calculator's formula
+                            const time = item.time || 0;
+                            const laborPerUnit = time * laborRate * laborMultiplier;
+                            const lineLabor = laborPerUnit * qty;
+
+                            // Material from item
+                            const lineMat = (item.materialPrice || 0) * qty;
+
+                            totalLabor += lineLabor;
+                            totalMaterial += lineMat;
+                            catTotal += (lineLabor + lineMat);
+                        }
+                    }
+                });
+                const subEl = document.getElementById('sub-' + cat);
+                if (subEl) subEl.innerText = Math.round(catTotal).toLocaleString() + ' ' + currency;
+            });
+
+            // Transport / Disposal / Summary ...
+            // Transport (only include if checkbox is checked)
+            const includeTransport = document.getElementById('includeTransport').checked;
+            const km = parseFloat(document.getElementById('transportKm').value) || 0;
+            const trips = parseFloat(document.getElementById('transportTrips').value) || 1;
+            const transportPerKm = calculatorTransportCostPerKm || costs.transportPerKm || 15;
+            let transportCalc = km * transportPerKm * trips;
+            if (transportCalc > 0 && transportCalc < (costs.transportMin || 500)) transportCalc = costs.transportMin || 500;
+            const transport = includeTransport ? transportCalc : 0;
+            document.getElementById('transportCalc').innerText = transportCalc.toLocaleString() + ' ' + currency;
+            document.getElementById('transportTotal').innerText = (includeTransport ? transportCalc : 0).toLocaleString() + ' ' + currency;
+
+            // Disposal (only include if checkbox is checked)
+            const includeDisposal = document.getElementById('includeDisposal').checked;
+            const containers = parseFloat(document.getElementById('disposalContainers').value) || 0;
+            const disposalCalc = containers * (costs.disposalContainer || 2500);
+            const disposal = includeDisposal ? disposalCalc : 0;
+            document.getElementById('disposalCalc').innerText = disposalCalc.toLocaleString() + ' ' + currency;
+            document.getElementById('disposalTotal').innerText = (includeDisposal ? disposalCalc : 0).toLocaleString() + ' ' + currency;
+
+            // Summary
+            const subtotal = totalLabor + totalMaterial + transport + disposal;
+            const vatPct = costs.vatPercent || 25;
+            const vat = subtotal * (vatPct / 100);
+            const total = subtotal + vat;
+            const rotPct = costs.rotPercent || 30;
+            const rot = totalLabor * (rotPct / 100);
+            const final = total - rot;
+
+            document.getElementById('sumLabor').innerText = totalLabor.toLocaleString() + ' ' + currency;
+            document.getElementById('sumMaterial').innerText = totalMaterial.toLocaleString() + ' ' + currency;
+            document.getElementById('sumTransport').innerText = transport.toLocaleString() + ' ' + currency;
+            document.getElementById('sumDisposal').innerText = disposal.toLocaleString() + ' ' + currency;
+            document.getElementById('sumSubtotal').innerText = subtotal.toLocaleString() + ' ' + currency;
+            document.getElementById('sumVat').innerText = vat.toLocaleString() + ' ' + currency;
+            document.getElementById('sumTotal').innerText = total.toLocaleString() + ' ' + currency;
+            document.getElementById('sumRot').innerText = '-' + rot.toLocaleString() + ' ' + currency;
+            document.getElementById('sumFinal').innerText = Math.round(final).toLocaleString() + ' ' + currency;
+        }
+
+        // ... (keep changeCurrency, toggleSection, setLanguage)
+        function changeCurrency() {
+            currency = document.getElementById('currencySelect').value;
+            renderWorkSections();
+            renderMaterials();
+            calcAll();
+        }
+
+        function toggleSection(header) {
+            const body = header.nextElementSibling;
+            body.classList.toggle('hidden');
+            const icon = header.querySelector('.fa-chevron-down, .fa-chevron-up');
+            if (icon) { icon.classList.toggle('fa-chevron-down'); icon.classList.toggle('fa-chevron-up'); }
+        }
+
+        function calcDetails() {
+            // Calculate door area
+            const doorH = parseFloat(document.getElementById('doorH').value) || 0;
+            const doorW = parseFloat(document.getElementById('doorW').value) || 0;
+            const doorArea = doorH * doorW;
+            document.getElementById('calcDA').innerText = doorArea.toFixed(2);
+
+            // Calculate window area
+            const winH = parseFloat(document.getElementById('winH').value) || 0;
+            const winW = parseFloat(document.getElementById('winW').value) || 0;
+            const winArea = winH * winW;
+            document.getElementById('calcWA').innerText = winArea.toFixed(2);
+
+            saveOfertaDimensions();
+            recalculateQuantities();
+            if (!isImportMode) calcAll();
+        }
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('constructPro_lang', lang);
+            applyLanguage();
+            renderWorkSections(); // Re-render with new language
+        }
+
+        function applyLanguage() {
+            const t = getT();
+            // Update all elements with data-i18n attribute
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.dataset.i18n;
+                if (t[key]) el.textContent = t[key];
+            });
+            // Update language selector
+            document.getElementById('langSelect').value = currentLang;
+        }
+
+        // Preview - Professional Quote Template
+        function showPreview() {
+            // Auto-save new client if manually entered
+            saveClientOnQuote();
+
+            // Translations for quote
+            const quoteTranslations = {
+                sv: {
+                    quoteNr: 'Offert nr',
+                    walls: 'Väggar',
+                    floor: 'Golv',
+                    date: 'den',
+                    name: 'Namn',
+                    address: 'Adress',
+                    phone: 'Tel',
+                    email: 'e-mail',
+                    quote: 'Offert',
+                    included: 'I offert ingår',
+                    material: 'Material',
+                    labor: 'Arbete',
+                    total: 'Total',
+                    inclVat: 'inkl moms',
+                    exVat: 'ex moms',
+                    transport: 'Transport, bil & resor',
+                    disposal: 'Avfall & Deponi',
+                    materialHandling: 'Materialhantering & Påslag',
+                    totalPrice: 'Total pris inkl. moms',
+                    rotDeduction: 'ROT avdrag',
+                    toPay: 'Att betala',
+                    wasteNote: 'Bortforsling av sopor, rivnings och spillmaterial ingår i offerten',
+                    estimatedTime: 'Uppskattad kalendertid för genomförande av projektet från byggstart',
+                    byAgreement: 'Enligt överenskommelse',
+                    warrantyMaterial: 'Garanti material',
+                    byManufacturer: 'enligt tillverkaren',
+                    liabilityPeriod: 'Ansvarstid',
+                    years: 'år',
+                    paymentTerms: 'Betalningsvillkor',
+                    daysAfter: 'dagar efter fullgjort arbete',
+                    validUntil: 'Offerten är giltig t.o.m.',
+                    months: ['januari', 'februari', 'mars', 'april', 'maj', 'juni', 'juli', 'augusti', 'september', 'oktober', 'november', 'december']
+                },
+                en: {
+                    quoteNr: 'Quote no',
+                    walls: 'Walls',
+                    floor: 'Floor',
+                    date: '',
+                    name: 'Name',
+                    address: 'Address',
+                    phone: 'Phone',
+                    email: 'e-mail',
+                    quote: 'Quote',
+                    included: 'Included in quote',
+                    material: 'Material',
+                    labor: 'Labor',
+                    total: 'Total',
+                    inclVat: 'incl VAT',
+                    exVat: 'ex VAT',
+                    transport: 'Transport & Travel',
+                    disposal: 'Waste & Disposal',
+                    materialHandling: 'Material Handling & Markup',
+                    totalPrice: 'Total Price incl. VAT',
+                    rotDeduction: 'ROT Deduction',
+                    toPay: 'To Pay',
+                    wasteNote: 'Removal of waste, demolition and waste material is included in the quote',
+                    estimatedTime: 'Estimated calendar time for project completion from start of construction',
+                    byAgreement: 'By agreement',
+                    warrantyMaterial: 'Material warranty',
+                    byManufacturer: 'according to manufacturer',
+                    liabilityPeriod: 'Liability period',
+                    years: 'years',
+                    paymentTerms: 'Payment terms',
+                    daysAfter: 'days after completed work',
+                    validUntil: 'Quote valid until',
+                    months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+                },
+                ro: {
+                    quoteNr: 'Ofertă nr',
+                    walls: 'Pereți',
+                    floor: 'Podea',
+                    date: 'din',
+                    name: 'Nume',
+                    address: 'Adresă',
+                    phone: 'Tel',
+                    email: 'e-mail',
+                    quote: 'Ofertă',
+                    included: 'În ofertă este inclus',
+                    material: 'Material',
+                    labor: 'Manoperă',
+                    total: 'Total',
+                    inclVat: 'incl TVA',
+                    exVat: 'fără TVA',
+                    transport: 'Transport & Deplasare',
+                    disposal: 'Deșeuri & Depozitare',
+                    materialHandling: 'Manipulare Materiale & Adaos',
+                    totalPrice: 'Preț Total incl. TVA',
+                    rotDeduction: 'Deducere ROT',
+                    toPay: 'De plată',
+                    wasteNote: 'Evacuarea deșeurilor, materialelor de demolare și resturilor este inclusă în ofertă',
+                    estimatedTime: 'Timp calendaristic estimat pentru finalizarea proiectului de la începerea construcției',
+                    byAgreement: 'Conform înțelegerii',
+                    warrantyMaterial: 'Garanție materiale',
+                    byManufacturer: 'conform producătorului',
+                    liabilityPeriod: 'Perioadă răspundere',
+                    years: 'ani',
+                    paymentTerms: 'Termeni de plată',
+                    daysAfter: 'zile după finalizare',
+                    validUntil: 'Ofertă valabilă până la',
+                    months: ['Ianuarie', 'Februarie', 'Martie', 'Aprilie', 'Mai', 'Iunie', 'Iulie', 'August', 'Septembrie', 'Octombrie', 'Noiembrie', 'Decembrie']
+                }
+            };
+            const t = quoteTranslations[currentLang] || quoteTranslations.sv;
+
+            // Gather all data
+            const clientName = document.getElementById('clName').value || '';
+            const clientAddr = document.getElementById('clAddr').value || '';
+            const clientCity = document.getElementById('clCity').value || '';
+            const clientPhone = document.getElementById('clPhone').value || '';
+            const clientEmail = document.getElementById('clEmail').value || '';
+            const workTypeDropdown = document.getElementById('clType');
+            const workType = workTypeDropdown.options[workTypeDropdown.selectedIndex]?.text || '';
+
+            const companyName = settings.company?.name || 'Bluebygg Gislaved AB';
+            const companyLogo = settings.company?.logo || '';
+
+            // Get totals and detailed costs
+            // We recalculate these to ensure accuracy and avoid parsing issues with thousands separators
+            const km = parseFloat(document.getElementById('transportKm').value) || 0;
+            const trips = parseFloat(document.getElementById('transportTrips').value) || 1;
+            let transportCost = km * (settings.costs?.transportPerKm || 15) * trips;
+            if (transportCost > 0 && transportCost < (settings.costs?.transportMin || 500)) transportCost = settings.costs?.transportMin || 500;
+
+            const containers = parseFloat(document.getElementById('disposalContainers').value) || 0;
+            const disposalCost = containers * (settings.costs?.disposalContainer || 2500);
+
+            const laborTotalStr = document.getElementById('sumLabor').innerText;
+            const materialTotalStr = document.getElementById('sumMaterial').innerText;
+
+            const subtotalStr = document.getElementById('sumSubtotal').innerText;
+            const vatTotalStr = document.getElementById('sumVat').innerText;
+            const totalStr = document.getElementById('sumTotal').innerText;
+            const rotDeductionStr = document.getElementById('sumRot').innerText;
+            const finalTotalStr = document.getElementById('sumFinal').innerText;
+
+            // Get areas from dimensions
+            const wallArea = document.getElementById('wallArea')?.innerText || '0 m²';
+            const floorArea = document.getElementById('floorArea')?.innerText || '0 m²';
+
+            // Generate quote number
+            const quoteNr = Math.floor(10000 + Math.random() * 90000);
+
+            // Generate dates
+            const today = new Date();
+            const validUntil = new Date(today);
+            validUntil.setDate(validUntil.getDate() + 30);
+            const formatDate = (d) => `${t.date} ${d.getDate()} ${t.months[d.getMonth()]} ${d.getFullYear()}`;
+            const todayStr = formatDate(today);
+            const validUntilStr = formatDate(validUntil);
+
+            // Build work items table rows - Category headers with individual items
+            let workRows = '';
+            Object.keys(categoryConfig).forEach(cat => {
+                const items = settings.workItems[cat] || [];
+                if (items.length === 0) return;
+
+                const checkedItems = [];
+                items.forEach((item, idx) => {
+                    const key = `${cat}-${idx}`;
+                    const sel = selected.work[key];
+                    if (sel?.checked) {
+                        const qty = sel.qty ?? item.importedQty ?? 1;
+                        const mat = (item.materialPrice || 0) * qty;
+                        const lab = (item.laborPrice || 0) * qty;
+                        checkedItems.push({
+                            name: item.name,
+                            material: mat,
+                            labor: lab,
+                            total: mat + lab
+                        });
+                    }
+                });
+
+                if (checkedItems.length > 0) {
+                    const catName = getCategoryName(cat);
+                    // Category Header
+                    workRows += `<tr><td colspan="4" style="padding: 8px 0; font-weight: bold; background-color: #f1f5f9;">${catName}</td></tr>`;
+
+                    // Individual Items
+                    checkedItems.forEach(i => {
+                        workRows += `
+                        <tr>
+                            <td style="padding: 4px 0 4px 10px;">${i.name}</td>
+                            <td style="padding: 4px 0; text-align: right;">${Math.round(i.material).toLocaleString()} kr</td>
+                            <td style="padding: 4px 0; text-align: right;">${Math.round(i.labor).toLocaleString()} kr</td>
+                            <td style="padding: 4px 0; text-align: right;">${Math.round(i.total).toLocaleString()} kr</td>
+                        </tr>`;
+                    });
+
+                    // Category Subtotal
+                    const catMat = checkedItems.reduce((sum, i) => sum + i.material, 0);
+                    const catLab = checkedItems.reduce((sum, i) => sum + i.labor, 0);
+                    const catTotal = catMat + catLab;
+
+                    workRows += `
+                        <tr style="border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 4px 0 8px 10px; font-style: italic;">Summa ${catName}</td>
+                            <td style="padding: 4px 0 8px 0; text-align: right; font-weight: bold;">${Math.round(catMat).toLocaleString()} kr</td>
+                            <td style="padding: 4px 0 8px 0; text-align: right; font-weight: bold;">${Math.round(catLab).toLocaleString()} kr</td>
+                            <td style="padding: 4px 0 8px 0; text-align: right; font-weight: bold;">${Math.round(catTotal).toLocaleString()} kr</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            const logoHtml = companyLogo
+                ? `<img src="${companyLogo}" style="max-height: 60px; object-fit: contain;">`
+                : `<div style="font-size: 24px; font-weight: bold; color: #f97316;">${companyName}</div>`;
+
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = `
+                <div style="font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #000;">
+                    <!-- Header using table for print compatibility -->
+                    <table style="width: 100%; margin-bottom: 15px;">
+                        <tr>
+                            <td style="vertical-align: top; width: 60%;">
+                                <table style="font-size: 10pt;">
+                                    <tr><td style="width: 70px;">${t.quoteNr}:</td><td><strong>${quoteNr}</strong></td></tr>
+                                    <tr><td>Ytta:</td><td></td></tr>
+                                    <tr><td style="padding-left: 15px;">${t.walls}:</td><td>${wallArea}</td></tr>
+                                    <tr><td style="padding-left: 15px;">${t.floor}:</td><td>${floorArea}</td></tr>
+                                </table>
+                            </td>
+                            <td style="vertical-align: top; text-align: right; width: 40%;">
+                                ${logoHtml}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Date and Customer using table -->
+                    <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                        <tr><td colspan="2" style="text-align: right; padding-bottom: 10px;">Gislaved ${todayStr}</td></tr>
+                        <tr><td style="width: 60px;">${t.name}:</td><td>${clientName || '—'}</td></tr>
+                        <tr><td>${t.address}:</td><td>${clientAddr || '—'}</td></tr>
+                        <tr><td></td><td>${clientCity || '—'}</td></tr>
+                        <tr><td>${t.phone}:</td><td>${clientPhone || '—'}</td></tr>
+                        <tr><td>${t.email}:</td><td>${clientEmail || '—'}</td></tr>
+                    </table>
+
+                    <!-- Title -->
+                    <h2 style="text-align: center; font-size: 16pt; margin: 20px 0 15px; text-decoration: underline;">
+                        ${t.quote}: ${workType}
+                    </h2>
+
+                    <!-- Work Items Table -->
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px; font-size: 10pt;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000;">
+                                <th style="text-align: left; padding: 5px 0; width: 45%;">${t.included}:</th>
+                                <th style="text-align: right; padding: 5px; width: 18%;">${t.material}<br><span style="font-weight: normal; font-size: 8pt;">${t.inclVat}</span></th>
+                                <th style="text-align: right; padding: 5px; width: 18%;">${t.labor}<br><span style="font-weight: normal; font-size: 8pt;">${t.exVat}</span></th>
+                                <th style="text-align: right; padding: 5px 0; width: 19%;">${t.total}<br><span style="font-weight: normal; font-size: 8pt;">${t.inclVat}</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${workRows}
+                        </tbody>
+                    </table>
+
+                    <!-- Summary using table -->
+                    <table style="width: 100%; font-size: 11pt; margin-bottom: 20px;">
+                        ${transportCost > 0 ? `
+                        <tr>
+                            <td style="text-align: right; padding: 3px 0;">${t.transport}</td>
+                            <td style="text-align: right; width: 150px;">${transportCost.toLocaleString()} kr</td>
+                        </tr>` : ''}
+                        ${disposalCost > 0 ? `
+                        <tr>
+                            <td style="text-align: right; padding: 3px 0;">${t.disposal}</td>
+                            <td style="text-align: right;">${disposalCost.toLocaleString()} kr</td>
+                        </tr>` : ''}
+                        
+                        <tr>
+                            <td style="text-align: right; padding: 3px 0;"><strong>${t.totalPrice}</strong></td>
+                            <td style="text-align: right; width: 150px;">${totalStr}</td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: right; padding: 3px 0;">${t.rotDeduction}</td>
+                            <td style="text-align: right;">${rotDeductionStr.replace('-', '')}</td>
+                        </tr>
+                        <tr style="border-top: 2px solid #000;">
+                            <td style="text-align: right; padding-top: 8px; font-size: 14pt; font-weight: bold;">${t.toPay}:</td>
+                            <td style="text-align: right; padding-top: 8px; font-size: 14pt; font-weight: bold;">${finalTotalStr}</td>
+                        </tr>
+                    </table>
+
+                    <!-- Terms Section -->
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 9pt;">
+                        <p style="margin: 5px 0;">${t.wasteNote}</p>
+                        <p style="margin: 8px 0;"><strong>${t.estimatedTime}:</strong><br>${t.byAgreement}</p>
+                        <p style="margin: 8px 0;"><strong>${t.warrantyMaterial}:</strong> ${t.byManufacturer}</p>
+                        <p style="margin: 8px 0;"><strong>${t.liabilityPeriod}:</strong> 10 ${t.years}</p>
+                        <p style="margin: 8px 0;"><strong>${t.paymentTerms}:</strong> 15 ${t.daysAfter}</p>
+                    </div>
+
+                    <!-- Validity using table -->
+                    <table style="width: 100%; margin-top: 15px; font-size: 10pt; font-weight: bold;">
+                        <tr>
+                            <td>${t.validUntil}</td>
+                            <td style="text-align: right;">${validUntilStr}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- PAGE 2: Terms and Conditions -->
+                <div style="font-family: Arial, sans-serif; font-size: 10pt; line-height: 1.6; color: #000; page-break-before: always; margin-top: 30px;">
+                    ${settings.terms ? `
+                        <h2 style="font-size: 14pt; font-weight: bold; margin-bottom: 20px;">Offertvillkor</h2>
+                        <div style="white-space: pre-wrap;">${settings.terms}</div>
+                    ` : `
+                    <h2 style="font-size: 14pt; font-weight: bold; margin-bottom: 20px;">Offertvillkor för klinker- och kakelarbeten</h2>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 11pt; font-weight: bold; margin-bottom: 8px; text-decoration: underline;">1. Giltighet och omfattning</h3>
+                        <p style="margin: 5px 0; font-size: 10pt;">Offerten gäller enbart för klinker och kakel och omfattar inte mosaik eller liknande material, då dessa har andra prisvillkor.</p>
+                        <p style="margin: 5px 0; font-size: 10pt;">Offerten avser den yta som vi har kommit överens om vid upprättandet av denna offert. Om det sker ändringar som innebär en utökning av ytan, exempelvis genom att ytterligare väggar, såsom duschväggar, ska klås in, eller andra liknande justeringar, kommer detta medföra extra kostnader.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 11pt; font-weight: bold; margin-bottom: 8px; text-decoration: underline;">2. Ansvar för material</h3>
+                        <p style="margin: 5px 0; font-size: 10pt;">Om kunden köper klinker och kakel på egen hand:</p>
+                        <p style="margin: 5px 0; font-size: 10pt;">Kunden har fullt ansvar för kvalitet och kvantitet av det inköpta materialet. Kunden bör räkna med minst 10 % extra material utöver den beräknade ytan för att täcka spill, avskärningar och eventuella fel.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 11pt; font-weight: bold; margin-bottom: 8px; text-decoration: underline;">3. Arbeten som ej ingår</h3>
+                        <p style="margin: 5px 0; font-size: 10pt;">Offerten inkluderar inte arbete inom VVS, såsom montering av golvbrunn, duschvägg, handfat, toalett eller liknande. Kostnader för detta tillkommer separat.</p>
+                        <p style="margin: 5px 0; font-size: 10pt;">Offerten inkluderar inte undergolvsarbete. Eventuell förstärkning eller förberedelse av golvet är helt på kundens ansvar.</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="font-size: 11pt; font-weight: bold; margin-bottom: 8px; text-decoration: underline;">4. Förbehåll vid undergolvsarbete</h3>
+                        <p style="margin: 5px 0; font-size: 10pt;">Om det vid undergolvsarbetet visar sig att golvet har bakfall mot golvbrunnen, kan extra kostnader för material och arbete tillkomma.</p>
+                    </div>
+                    `}
+
+                    <!-- Closing Message -->
+                    <p style="margin: 30px 0; font-size: 10pt; font-weight: bold;">Vi hoppas att vårt erbjudande skall vara förmånligt för Er.</p>
+
+                    <!-- Contact/Signature -->
+                    <div style="margin-top: 50px; font-size: 10pt;">
+                        <p style="margin: 3px 0; font-weight: bold;">Sergiu Mosincat</p>
+                        <p style="margin: 3px 0; padding-left: 40px;">0761149033</p>
+                        <p style="margin: 3px 0; padding-left: 40px; font-weight: bold;">Bluebygg Gislaved AB</p>
+                    </div>
+                </div>
+            `;
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').classList.add('hidden');
+        }
+
+        // Send quote via email
+        function sendEmail() {
+            const clientEmail = document.getElementById('clEmail').value;
+            const clientName = document.getElementById('clName').value || 'Kund';
+            const workType = document.getElementById('clType').value || 'Offert';
+            const total = document.getElementById('sumFinal').innerText;
+            const companyName = settings.company?.name || 'Construct Pro';
+
+            const subject = encodeURIComponent(`Offert - ${workType}`);
+            const body = encodeURIComponent(
+                `Hej ${clientName},\n\n` +
+                `Tack för att du valde ${companyName}!\n\n` +
+                `Här är din offert för ${workType}:\n` +
+                `Totalt att betala: ${total}\n\n` +
+                `Offerten är giltig i 30 dagar.\n\n` +
+                `Med vänliga hälsningar,\n${companyName}`
+            );
+
+            const mailtoLink = `mailto:${clientEmail}?subject=${subject}&body=${body}`;
+            window.open(mailtoLink, '_blank');
+        }
+
+        // Save as PDF (uses browser print to PDF)
+        function savePDF() {
+            alert('Tips: Välj "Spara som PDF" som skrivare i utskriftsdialogen.');
+            window.print();
+        }
+
+        loadSettings();
+        applyLanguage();
+
+        // Initialize
+        loadCalculatorItems();
+        loadQuotePresetsFromStorage();
+        renderQuotePresets();
+        renderQuotePresets();
+        // updateDate(); // Removed undefined function to prevent crash
+        loadDimensionsFromStorage(); // CRITICAL: Load shared dimensions on startup
+
+        // SYNC: Function to calculate totals directly from Calculator's stored data
+        function loadCalculatorTotals() {
+            try {
+                const calcRaw = localStorage.getItem('constructPro_calculator');
+                if (!calcRaw) return;
+
+                const calcData = JSON.parse(calcRaw);
+                if (!calcData.categories) return;
+
+                // Use same calculation logic as Calculator
+                const laborRate = calcData.laborRate || 450;
+                const laborOverhead = settings.costs?.laborOverhead ?? 252;
+                const laborMultiplier = 1 + (laborOverhead / 100);
+
+                let totalLabor = 0;
+                let totalMaterial = 0;
+
+                calcData.categories.forEach(cat => {
+                    cat.items.forEach(item => {
+                        if (item.selected) {
+                            const qty = item.quantity || 0;
+                            const laborPerUnit = (item.time || 0) * laborRate * laborMultiplier;
+                            const laborTotal = laborPerUnit * qty;
+                            const materialTotal = (item.materialPrice || 0) * qty;
+
+                            totalLabor += laborTotal;
+                            totalMaterial += materialTotal;
+                        }
+                    });
+                });
+
+                // Update Checklist UI with calculated totals
+                if (document.getElementById('sumLabor')) {
+                    document.getElementById('sumLabor').innerText = Math.round(totalLabor).toLocaleString() + ' ' + currency;
+                }
+                if (document.getElementById('sumMaterial')) {
+                    document.getElementById('sumMaterial').innerText = Math.round(totalMaterial).toLocaleString() + ' ' + currency;
+                }
+
+                // Recalculate derived totals (transport, VAT, ROT, etc.)
+                calcAll();
+
+            } catch (e) { console.error("Error calculating totals from Calculator data:", e); }
+        }
+
+        // Load Calculator totals on startup
+        loadCalculatorTotals();
+
+        // SYNC: Listen for Calculator Total updates
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'constructPro_calculator_totals' && e.newValue) {
+                try {
+                    const totals = JSON.parse(e.newValue);
+                    // Update Checklist summary with Calculator totals
+                    if (document.getElementById('sumLabor')) {
+                        document.getElementById('sumLabor').innerText = Math.round(totals.labor).toLocaleString() + ' ' + currency;
+                    }
+                    if (document.getElementById('sumMaterial')) {
+                        document.getElementById('sumMaterial').innerText = Math.round(totals.material).toLocaleString() + ' ' + currency;
+                    }
+                    // Recalculate all totals based on new values
+                    calcAll();
+                } catch (err) { console.error("Error syncing totals from Calculator:", err); }
+            }
+        });
+    </script>
+</body>
+
+</html>

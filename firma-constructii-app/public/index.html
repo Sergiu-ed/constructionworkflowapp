@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Manager Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            transition: box-shadow 0.2s ease;
+            position: absolute;
+            resize: both;
+            overflow: hidden;
+            min-width: 180px;
+            min-height: 100px;
+            container-type: inline-size;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card.dragging {
+            opacity: 0.9;
+            z-index: 100;
+            box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.3);
+        }
+
+        .card::-webkit-resizer {
+            background: linear-gradient(-45deg, transparent 60%, #f97316 60%, #f97316 70%, transparent 70%, transparent 80%, #f97316 80%);
+        }
+
+        .drag-handle {
+            cursor: move;
+            padding: 8px 12px;
+            background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 700;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .drag-handle i.fa-grip-vertical {
+            color: #cbd5e1;
+            margin-right: 8px;
+        }
+
+        .card-content {
+            padding: 12px;
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+
+        /* Scale content based on card size */
+        @container (min-width: 350px) {
+            .card-content {
+                font-size: 14px;
+            }
+
+            .card-content h2,
+            .card-content h3 {
+                font-size: 16px;
+            }
+        }
+
+        @container (min-width: 450px) {
+            .card-content {
+                font-size: 16px;
+                padding: 16px;
+            }
+
+            .card-content h2,
+            .card-content h3 {
+                font-size: 18px;
+            }
+        }
+
+        @container (min-width: 550px) {
+            .card-content {
+                font-size: 18px;
+                padding: 20px;
+            }
+
+            .card-content h2,
+            .card-content h3 {
+                font-size: 22px;
+            }
+        }
+
+        #dashboardContainer {
+            position: relative;
+            min-height: 80vh;
+        }
+
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.5s ease-in-out;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+
+        .day-today {
+            background-color: #dbeafe;
+            color: #1e40af;
+            border: 2px solid #3b82f6;
+            cursor: pointer;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .mode-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .mode-btn:not(.active) {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+        }
+
+        .pulse-active {
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(74, 222, 128, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(74, 222, 128, 0);
+            }
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 1200px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Gantt Chart */
+        .gantt-bar {
+            height: 32px;
+            border-radius: 6px;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .gantt-bar:hover {
+            transform: scaleY(1.1);
+            filter: brightness(1.1);
+        }
+
+        .gantt-row {
+            height: 40px;
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+        }
+
+        .gantt-timeline {
+            display: grid;
+            gap: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+    <!-- Navbar -->
+    <nav
+        class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-3">
+            <div id="navLogo" class="flex items-center justify-center">
+                <div class="bg-orange-600 text-white p-2.5 rounded-lg shadow-sm"><i class="fas fa-hammer"></i></div>
+            </div>
+            <div>
+                <h1 id="navCompName" class="font-bold text-lg leading-tight">CONSTRUCT PRO</h1>
+                <p id="navCompSlogan" class="text-[11px] text-slate-500 font-medium uppercase" data-i18n="site_manager">
+                    Byggledare</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <select id="langSelect" onchange="setLanguage(this.value)"
+                class="bg-slate-50 border text-sm rounded-lg px-3 py-1.5 cursor-pointer hover:border-orange-300 transition">
+                <option value="ro">🇷🇴 RO</option>
+                <option value="sv">🇸🇪 SV</option>
+                <option value="en">🇬🇧 EN</option>
+            </select>
+            <div class="hidden md:block text-slate-600 font-mono text-xl font-bold bg-slate-50 px-4 py-1 rounded-lg border border-slate-200 shadow-inner"
+                id="digitalClock">--:--:--</div>
+            <a href="kunder.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Kunder">
+                <i class="fas fa-users"></i>
+            </a>
+            <a href="quotes.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-green-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Offerter">
+                <i class="fas fa-file-invoice-dollar"></i>
+            </a>
+            <a href="anstallda.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-blue-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Anställda">
+                <i class="fas fa-hard-hat"></i>
+            </a>
+            <a href="bilar.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Fordonspark">
+                <i class="fas fa-car"></i>
+            </a>
+            <a href="calculator.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Kalkylator">
+                <i class="fas fa-calculator"></i>
+            </a>
+            <a href="settings.html"
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-orange-600 transition bg-slate-50 px-3 py-1.5 rounded-lg"
+                title="Inställningar">
+                <i class="fas fa-cog"></i>
+            </a>
+            <button
+                class="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-red-600 transition bg-slate-50 px-3 py-1.5 rounded-lg">
+                <span data-i18n="log_out">Logga ut</span> <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <main id="dashboardContainer" class="p-4 md:p-6 max-w-7xl mx-auto">
+        <!-- Cards will be rendered dynamically -->
+    </main>
+
+    <!-- FULL CALENDAR MODAL -->
+    <div id="calendarModal" class="modal">
+        <div class="modal-content" style="max-width: 95vw; width: 1400px; height: 90vh;">
+            <div
+                class="bg-gradient-to-r from-orange-600 to-orange-500 text-white p-4 rounded-t-xl flex justify-between items-center">
+                <div class="flex items-center gap-4">
+                    <div class="flex gap-1">
+                        <button onclick="modalCalPrev()"
+                            class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded font-bold"><i
+                                class="fas fa-chevron-left"></i></button>
+                        <button onclick="modalCalNext()"
+                            class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded font-bold"><i
+                                class="fas fa-chevron-right"></i></button>
+                        <button onclick="modalCalToday()"
+                            class="bg-white/20 hover:bg-white/30 px-3 py-2 rounded font-bold text-sm">Idag</button>
+                    </div>
+                    <h2 id="modalCalTitle" class="text-xl font-bold">Januari 2026</h2>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex gap-1 bg-white/20 rounded p-1">
+                        <button id="modalBtnWeek" onclick="setModalCalView('week')"
+                            class="px-3 py-1 rounded text-sm font-bold">Vecka</button>
+                        <button id="modalBtnMonth" onclick="setModalCalView('month')"
+                            class="px-3 py-1 rounded text-sm font-bold bg-white text-orange-600">Månad</button>
+                    </div>
+                    <button onclick="closeModal('calendarModal')" class="text-2xl hover:opacity-70"><i
+                            class="fas fa-times"></i></button>
+                </div>
+            </div>
+            <div class="p-4 bg-white h-[calc(100%-60px)] overflow-auto">
+                <div id="modalCalBody" class="h-full"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT PLANNER MODAL -->
+    <div id="projectPlannerModal" class="modal">
+        <div class="modal-content">
+            <div
+                class="bg-gradient-to-r from-slate-800 to-slate-700 text-white p-6 rounded-t-xl flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold flex items-center gap-2"><i class="fas fa-project-diagram"></i> <span
+                            data-i18n="project_planner">Projektplanering</span></h2>
+                    <p class="text-slate-300 text-sm" data-i18n="gantt_view">Gantt-vy av alla projekt</p>
+                </div>
+                <button onclick="closeModal('projectPlannerModal')" class="text-white/60 hover:text-white text-2xl"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <!-- Timeline Header -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex gap-2">
+                        <button onclick="changeGanttView('week')"
+                            class="px-3 py-1 rounded text-sm font-medium bg-slate-100 hover:bg-orange-100"
+                            data-i18n="week">Vecka</button>
+                        <button onclick="changeGanttView('month')"
+                            class="px-3 py-1 rounded text-sm font-medium bg-orange-500 text-white"
+                            data-i18n="month">Månad</button>
+                    </div>
+                    <a href="settings.html#projects"
+                        class="text-sm text-orange-600 hover:text-orange-700 font-medium"><i class="fas fa-plus"></i>
+                        <span data-i18n="add_project">Lägg till projekt</span></a>
+                </div>
+
+                <!-- Gantt Chart Container -->
+                <div class="bg-slate-50 rounded-xl border overflow-hidden">
+                    <!-- Day Headers -->
+                    <div id="ganttHeader" class="grid border-b bg-white sticky top-0"></div>
+                    <!-- Project Rows -->
+                    <div id="ganttBody" class="relative min-h-[200px]"></div>
+                </div>
+
+                <!-- Legend -->
+                <div class="flex gap-4 mt-4 text-xs text-slate-500">
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-orange-500"></span> <span
+                            data-i18n="planned">Planerad</span></span>
+                    <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-green-500"></span> <span
+                            data-i18n="active">Pågående</span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROJECT DETAILS MODAL -->
+    <div id="projectDetailsModal" class="modal">
+        <div class="modal-content max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div
+                class="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-5 rounded-t-xl flex justify-between items-center sticky top-0">
+                <div>
+                    <h2 class="text-lg font-bold"><i class="fas fa-project-diagram mr-2"></i>Projektdetaljer</h2>
+                    <p id="projectDetailsName" class="text-sm text-white/70">Projektnamn</p>
+                </div>
+                <button onclick="closeModal('projectDetailsModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5">
+                <!-- Project Info Grid -->
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-slate-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-user mr-2"></i>Kund</h3>
+                        <p id="projectDetailsClient" class="text-sm">-</p>
+                        <p id="projectDetailsAddress" class="text-sm text-slate-500">-</p>
+                        <p id="projectDetailsClientPhone" class="text-sm text-slate-500 mt-1">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg">
+                        <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-calendar mr-2"></i>Tidslinje</h3>
+                        <div class="text-sm"><strong>Start:</strong> <span id="projectDetailsStart">-</span></div>
+                        <div class="text-sm"><strong>Slut:</strong> <span id="projectDetailsEnd">-</span></div>
+                        <div class="text-sm mt-1"><strong>Status:</strong> <span id="projectDetailsStatus">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="bg-white border rounded-lg p-4 mb-4">
+                    <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-list mr-2"></i>Arbetsmoment</h3>
+                    <div id="projectDetailsItems" class="overflow-x-auto">
+                        <!-- Items will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Phases -->
+                <div class="bg-white border rounded-lg p-4 mb-4">
+                    <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-tasks mr-2"></i>Kategorier/Faser</h3>
+                    <div id="projectDetailsPhases" class="space-y-2">
+                        <!-- Phases will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Financial Summary -->
+                <div class="bg-slate-100 rounded-lg p-4">
+                    <h3 class="font-bold text-slate-700 mb-2"><i class="fas fa-calculator mr-2"></i>Ekonomi</h3>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-sm text-slate-500">Arbetskostnad</div>
+                            <div id="projectDetailsLabor" class="text-lg font-bold">0 SEK</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-slate-500">Material</div>
+                            <div id="projectDetailsMaterial" class="text-lg font-bold">0 SEK</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-slate-500">Totalt</div>
+                            <div id="projectDetailsTotal" class="text-lg font-bold text-orange-600">0 SEK</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-2 mt-4">
+                    <button onclick="closeModal('projectDetailsModal')"
+                        class="flex-1 py-2 border rounded-lg hover:bg-slate-50">Stäng</button>
+                    <button id="projectDetailsViewQuote"
+                        class="flex-1 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-bold">
+                        <i class="fas fa-file-invoice mr-2"></i>Visa offert
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TODO MODAL -->
+    <div id="todoModal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div
+                class="bg-gradient-to-r from-red-500 to-red-600 text-white p-5 rounded-t-xl flex justify-between items-center">
+                <h2 class="text-lg font-bold"><i class="fas fa-list-check mr-2"></i><span data-i18n="todo_list">Att
+                        Göra</span></h2>
+                <button onclick="closeModal('todoModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="flex gap-2 mb-4">
+                    <input id="newTodoInput" type="text" class="flex-1 border rounded-lg px-3 py-2 text-sm"
+                        data-i18n-placeholder="add_task" placeholder="Lägg till uppgift...">
+                    <button onclick="addTodo()"
+                        class="bg-red-500 text-white px-4 rounded-lg font-bold hover:bg-red-600"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <ul id="todoModalList" class="space-y-2 max-h-[400px] overflow-y-auto"></ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- WEATHER MODAL -->
+    <div id="weatherModal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div
+                class="bg-gradient-to-r from-cyan-500 to-blue-500 text-white p-5 rounded-t-xl flex justify-between items-center">
+                <div>
+                    <h2 class="text-lg font-bold"><i class="fas fa-cloud-sun mr-2"></i><span
+                            data-i18n="weather">Väder</span></h2>
+                    <p id="weatherLocationName" class="text-sm text-white/80">Laddar...</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span id="tempLocationIndicator"
+                        class="hidden text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full font-bold"><i
+                            class="fas fa-clock mr-1"></i>Temp</span>
+                    <button onclick="closeModal('weatherModal')" class="text-white/60 hover:text-white"><i
+                            class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+            <div class="p-5">
+                <!-- Location Search -->
+                <div class="relative mb-4">
+                    <input type="text" id="weatherSearchInput" placeholder="Sök plats..."
+                        class="w-full border rounded-lg px-3 py-2 text-sm pr-10"
+                        oninput="searchWeatherLocation(this.value)">
+                    <i class="fas fa-search absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <div id="weatherSearchResults"
+                        class="absolute top-full left-0 right-0 bg-white border rounded-b-lg shadow-lg z-10 hidden max-h-40 overflow-auto">
+                    </div>
+                </div>
+
+                <!-- Current Weather -->
+                <div id="weatherCurrent" class="text-center mb-6">
+                    <div id="weatherCurrentIcon" class="text-6xl mb-2">⏳</div>
+                    <p id="weatherCurrentTemp" class="text-4xl font-bold text-slate-800">--°C</p>
+                    <p id="weatherCurrentDesc" class="text-slate-500">Laddar väderdata...</p>
+                </div>
+
+                <!-- 7-Day Forecast -->
+                <div id="weatherForecast" class="grid grid-cols-7 gap-2 text-center text-sm">
+                    <!-- Filled dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KM TRACKING MODAL -->
+    <div id="kmModal" class="modal">
+        <div class="modal-content max-w-md">
+            <div
+                class="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-5 rounded-t-xl flex justify-between items-center">
+                <h2 class="text-lg font-bold"><i class="fas fa-route mr-2"></i><span data-i18n="km_tracking">Km
+                        Spårning</span></h2>
+                <button onclick="closeModal('kmModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="text-center mb-6">
+                    <p class="text-4xl font-bold text-slate-800">1,247 km</p>
+                    <p class="text-slate-500" data-i18n="this_month">Denna månad</p>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                        <span>Idag</span><span class="font-bold">45 km</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                        <span>Denna vecka</span><span class="font-bold">312 km</span>
+                    </div>
+                </div>
+                <button class="w-full mt-4 bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600"><i
+                        class="fas fa-plus mr-2"></i><span data-i18n="log_trip">Logga resa</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MESSAGES MODAL -->
+    <div id="messagesModal" class="modal">
+        <div class="modal-content max-w-lg">
+            <div
+                class="bg-gradient-to-r from-purple-500 to-indigo-500 text-white p-5 rounded-t-xl flex justify-between items-center">
+                <h2 class="text-lg font-bold"><i class="fas fa-envelope mr-2"></i><span
+                        data-i18n="messages">Meddelanden</span></h2>
+                <button onclick="closeModal('messagesModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5">
+                <div class="flex gap-2 mb-4 border-b">
+                    <button class="px-4 py-2 font-medium text-purple-600 border-b-2 border-purple-600">Alla</button>
+                    <button class="px-4 py-2 font-medium text-slate-400 hover:text-slate-600">📧 Email</button>
+                    <button class="px-4 py-2 font-medium text-slate-400 hover:text-slate-600">💬 SMS</button>
+                    <button class="px-4 py-2 font-medium text-slate-400 hover:text-slate-600"><i
+                            class="fab fa-whatsapp"></i></button>
+                </div>
+                <div class="space-y-3 max-h-[400px] overflow-y-auto">
+                    <div class="p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer">
+                        <div class="flex justify-between items-start">
+                            <p class="font-medium text-slate-800">Erik Andersson</p>
+                            <span class="text-xs text-slate-400">10:30</span>
+                        </div>
+                        <p class="text-sm text-slate-500 truncate">Hej! Kan vi boka ett möte imorgon?</p>
+                    </div>
+                    <div
+                        class="p-3 bg-purple-50 rounded-lg hover:bg-purple-100 cursor-pointer border-l-4 border-purple-500">
+                        <div class="flex justify-between items-start">
+                            <p class="font-medium text-slate-800">Maria Svensson</p>
+                            <span class="text-xs text-slate-400">09:15</span>
+                        </div>
+                        <p class="text-sm text-slate-500 truncate">Offerten ser bra ut! När kan ni börja?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STOP TIMER MODAL -->
+    <div id="stopTimerModal" class="modal">
+        <div class="modal-content max-w-sm">
+            <div
+                class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-5 rounded-t-xl flex justify-between items-center">
+                <h2 class="text-lg font-bold"><i class="fas fa-stop-circle mr-2"></i><span
+                        data-i18n="stop_timer">Avsluta pass</span></h2>
+                <button onclick="closeModal('stopTimerModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Sluttid</label>
+                    <input type="datetime-local" id="stopTimeInput"
+                        class="w-full border rounded px-3 py-2 text-sm bg-slate-50">
+                </div>
+
+                <div id="transportFields" class="hidden space-y-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Fordon</label>
+                        <select id="stopCarSelect" class="w-full border rounded px-3 py-2 text-sm bg-slate-50"
+                            onchange="updateOdometerHint()">
+                            <option value="">Välj bil...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Ny Mätarställning</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="stopOdometerInput"
+                                class="w-full border rounded px-3 py-2 text-sm bg-slate-50" placeholder="0">
+                            <span class="text-sm font-bold text-slate-400">km</span>
+                        </div>
+                        <p class="text-xs text-orange-500 mt-1" id="odometerHint"></p>
+                    </div>
+                    <div class="text-center text-slate-400 text-xs">— eller —</div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Km körda (manuellt)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="stopManualKmInput"
+                                class="w-full border rounded px-3 py-2 text-sm bg-slate-50"
+                                placeholder="Ange km direkt">
+                            <span class="text-sm font-bold text-slate-400">km</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-1">Använd om du inte har mätarställning</p>
+                    </div>
+                </div>
+
+                <div id="workFields" class="space-y-4 pt-2 border-t border-slate-100">
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Projekt (Valfritt)</label>
+                        <select id="stopProjectSelect" class="w-full border rounded px-3 py-2 text-sm bg-slate-50">
+                            <option value="">Allmänt / Inget</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Beskrivning</label>
+                    <textarea id="stopDescription" rows="2" class="w-full border rounded px-3 py-2 text-sm bg-slate-50"
+                        placeholder="Vad gjordes?"></textarea>
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Logga till anställd</label>
+                    <select id="stopEmployeeSelect" class="w-full border rounded px-3 py-2 text-sm bg-slate-50">
+                        <option value="">Välj anställd...</option>
+                    </select>
+                </div>
+
+                <button onclick="confirmStopTimer()"
+                    class="w-full bg-slate-800 text-white py-3 rounded-lg font-bold hover:bg-slate-700 mt-2">
+                    <i class="fas fa-check mr-2"></i><span data-i18n="save_stop">Spara & Stoppa</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT START TIME MODAL -->
+    <div id="editStartModal" class="modal">
+        <div class="modal-content max-w-xs">
+            <div class="bg-slate-800 text-white p-4 rounded-t-xl flex justify-between items-center">
+                <h2 class="text-sm font-bold"><i class="fas fa-clock mr-2"></i>Justera Starttid</h2>
+                <button onclick="closeModal('editStartModal')" class="text-white/60 hover:text-white"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-4 space-y-4">
+                <input type="datetime-local" id="newStartTimeInput" class="w-full border rounded px-3 py-2 text-sm">
+                <button onclick="saveNewStartTime()"
+                    class="w-full bg-blue-500 text-white py-2 rounded font-bold hover:bg-blue-600">Uppdatera</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== TRANSLATIONS =====
+        const translations = {
+            ro: {
+                site_manager: "Manager Șantier", log_out: "Deconectare", calendar: "Calendar", planned_projects: "Proiecte Planificate",
+                todays_plan: "Planul de Azi", in_progress: "În Desfășurare", planned: "Planificat", site: "ȘANTIER", transport: "TRANSPORT",
+                current_activity: "Activitate Curentă", team_present: "Echipă Prezentă", new_quote: "Ofertă Nouă", quick_contact: "Contact Rapid",
+                call: "Apel", todo_list: "Lista de Sarcini", present: "Prezent", stopped: "PONTAJ OPRIT",
+                mode_work: "Șantier", mode_transport: "Transport",
+                months: ["Ianuarie", "Februarie", "Martie", "Aprilie", "Mai", "Iunie", "Iulie", "August", "Septembrie", "Octombrie", "Noiembrie", "Decembrie"],
+                days: ["L", "M", "M", "J", "V", "S", "D"],
+                project_planner: "Planificare Proiecte", gantt_view: "Vizualizare Gantt", week: "Săptămână", month: "Lună", add_project: "Adaugă proiect",
+                active: "Activ", completed: "Finalizat", weather: "Meteo", km_tracking: "Km Tracking", this_month: "Luna aceasta", log_trip: "Înregistrează călătorie",
+                messages: "Mesaje", add_task: "Adaugă sarcină...",
+                time_report: "Raport Timp", start: "Start", stop: "Stop", ready_work: "Gata de muncă", ready_transport: "Gata de transport",
+                work_started: "Munca a început", transport_started: "Transportul a început", time_saved: "Timp salvat", team_status: "Status Echipă",
+                on_site: "Pe șantier", on_way: "Pe drum", checked_out: "Plecat", you: "Tu",
+                // New keys for full sync
+                today: "Azi", notes: "Notițe", notes_sample: "Nu uita să suni furnizorul...", no_projects: "Fără proiecte",
+                new_count: "noi", admin: "Admin", assembly: "Montaj", mineral_wool: "Vată minerală",
+                work_running: "Lucru în curs...", trip_running: "Călătorie în curs...", project: "Proiect",
+                select_project: "Selectează proiect...", general_none: "General / Niciunul", city: "Oraș",
+                gypsum_osb: "Gips și OSB", insulation: "Izolație", click_edit_time: "Click pentru a modifica ora de start",
+                car: "Mașină", select_car: "Selectează mașină...", day: "Zi", list: "Listă", year: "An"
+            },
+            sv: {
+                site_manager: "Byggledare", log_out: "Logga ut", calendar: "Kalender", planned_projects: "Planerade Projekt",
+                todays_plan: "Dagens Plan", in_progress: "Pågående", planned: "Planerad", site: "BYGGPLATS", transport: "TRANSPORT",
+                current_activity: "Nuvarande Aktivitet", team_present: "Närvarande Team", new_quote: "Ny Offert", quick_contact: "Snabbkontakt",
+                call: "Ring", todo_list: "Att Göra", present: "Närvarande", stopped: "TIDRAPPORT STOPPAD",
+                mode_work: "Bygge", mode_transport: "Resa",
+                months: ["Januari", "Februari", "Mars", "April", "Maj", "Juni", "Juli", "Augusti", "September", "Oktober", "November", "December"],
+                days: ["M", "T", "O", "T", "F", "L", "S"],
+                project_planner: "Projektplanering", gantt_view: "Gantt-vy av alla projekt", week: "Vecka", month: "Månad", add_project: "Lägg till projekt",
+                active: "Pågående", completed: "Avslutad", weather: "Väder", km_tracking: "Km Spårning", this_month: "Denna månad", log_trip: "Logga resa",
+                messages: "Meddelanden", add_task: "Lägg till uppgift...",
+                time_report: "Tidrapport", start: "Start", stop: "Stopp", ready_work: "Redo för arbete", ready_transport: "Redo för resa",
+                work_started: "Arbete startat", transport_started: "Resa startad", time_saved: "Tid sparad", team_status: "Team Status",
+                on_site: "På bygget", on_way: "På väg", checked_out: "Utcheckad", you: "Du",
+                // New keys for full sync
+                today: "Idag", notes: "Anteckningar", notes_sample: "Glöm inte att ringa leverantören...", no_projects: "Inga projekt",
+                new_count: "nya", admin: "Admin", assembly: "Montage", mineral_wool: "Mineralull",
+                work_running: "Arbete pågår...", trip_running: "Resa pågår...", project: "Projekt",
+                select_project: "Välj projekt...", general_none: "Allmänt / Inget", city: "Stad",
+                gypsum_osb: "Gips och OSB", insulation: "Isolering", click_edit_time: "Klicka för att ändra starttid",
+                car: "Bil", select_car: "Välj bil...", day: "Dag", list: "Lista", year: "År"
+            },
+            en: {
+                site_manager: "Site Manager", log_out: "Log Out", calendar: "Calendar", planned_projects: "Planned Projects",
+                todays_plan: "Today's Plan", in_progress: "In Progress", planned: "Planned", site: "SITE", transport: "TRANSPORT",
+                current_activity: "Current Activity", team_present: "Team Present", new_quote: "New Quote", quick_contact: "Quick Contact",
+                call: "Call", todo_list: "To-Do List", present: "Present", stopped: "TIME TRACKING STOPPED",
+                mode_work: "Work", mode_transport: "Transport",
+                months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+                days: ["M", "T", "W", "T", "F", "S", "S"],
+                project_planner: "Project Planner", gantt_view: "Gantt view of all projects", week: "Week", month: "Month", add_project: "Add project",
+                active: "Active", completed: "Completed", weather: "Weather", km_tracking: "Km Tracking", this_month: "This month", log_trip: "Log trip",
+                messages: "Messages", add_task: "Add task...",
+                time_report: "Time Report", start: "Start", stop: "Stop", ready_work: "Ready for work", ready_transport: "Ready for transport",
+                work_started: "Work started", transport_started: "Transport started", time_saved: "Time saved", team_status: "Team Status",
+                on_site: "On site", on_way: "On the way", checked_out: "Checked out", you: "You",
+                // New keys for full sync
+                today: "Today", notes: "Notes", notes_sample: "Don't forget to call the supplier...", no_projects: "No projects",
+                new_count: "new", admin: "Admin", assembly: "Assembly", mineral_wool: "Mineral wool",
+                work_running: "Work in progress...", trip_running: "Trip in progress...", project: "Project",
+                select_project: "Select project...", general_none: "General / None", city: "City",
+                gypsum_osb: "Gypsum and OSB", insulation: "Insulation", click_edit_time: "Click to edit start time",
+                car: "Car", select_car: "Select car...", day: "Day", list: "List", year: "Year"
+            }
+        };
+
+        // Widget definitions for dashboard
+        const widgetRenderers = {
+            calendar: renderCalendarCard,
+            projects: renderProjectsCard,
+            tasks: renderTasksCard,
+            timer: renderTimerCard,
+            team: renderTeamCard,
+            todo: renderTodoCard,
+            quote: renderQuoteCard,
+            contacts: renderContactsCard,
+            weather: renderWeatherCard,
+            km: renderKmCard,
+            messages: renderMessagesCard,
+            whatsapp: renderWhatsappCard,
+            sms: renderSmsCard,
+            mail: renderMailCard,
+            notes: renderNotesCard
+        };
+
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+        let settings = {};
+        let todos = JSON.parse(localStorage.getItem('constructPro_todos') || '[]');
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('constructPro_lang', lang);
+            document.getElementById('langSelect').value = lang;
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang] && translations[lang][key]) el.innerText = translations[lang][key];
+            });
+            renderDashboard();
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('constructPro_settings');
+            if (saved) {
+                try { settings = JSON.parse(saved); }
+                catch (e) { settings = {}; }
+            }
+            if (!settings.dashboardCards) {
+                settings.dashboardCards = [
+                    { id: 'calendar', size: 'M' }, { id: 'projects', size: 'S' }, { id: 'tasks', size: 'L' },
+                    { id: 'timer', size: 'L' }, { id: 'todo', size: 'S' }, { id: 'quote', size: 'S' }, { id: 'contacts', size: 'S' },
+                    { id: 'weather', size: 'S' }
+                ];
+            }
+            // Migrate old format
+            if (settings.dashboardCards.length > 0 && typeof settings.dashboardCards[0] === 'string') {
+                settings.dashboardCards = settings.dashboardCards.map(id => ({ id, size: 'M' }));
+
+                // Add new cards if likely using default setup
+                if (!settings.dashboardCards.find(c => c.id === 'team')) {
+                    settings.dashboardCards.push({ id: 'team', size: 'S' });
+                }
+            }
+            // Add team card if missing from default layout for new users
+            if (settings.dashboardCards && !settings.dashboardCards.find(c => c.id === 'team')) {
+                settings.dashboardCards.push({ id: 'team', size: 'S' });
+            }
+            // Add weather card if missing
+            if (settings.dashboardCards && !settings.dashboardCards.find(c => c.id === 'weather')) {
+                settings.dashboardCards.push({ id: 'weather', size: 'S' });
+            }
+            // Add other standard cards if missing (for users with old config)
+            const standardCards = ['calendar', 'projects', 'tasks', 'timer', 'todo', 'quote', 'contacts'];
+            standardCards.forEach(cardId => {
+                if (settings.dashboardCards && !settings.dashboardCards.find(c => c.id === cardId)) {
+                    settings.dashboardCards.push({ id: cardId, size: 'S' });
+                }
+            });
+            if (!settings.projects) settings.projects = [];
+            // Save settings after migration to persist new cards
+            localStorage.setItem('constructPro_settings', JSON.stringify(settings));
+
+            // Ensure employees exist (for new users or empty data)
+            const employees = JSON.parse(localStorage.getItem('constructPro_employees') || '[]');
+            if (employees.length === 0) {
+                const defaultEmployees = [
+                    { id: 'emp_1', name: 'Erik Eriksson', position: 'Snickare', phone: '070-123 4567', email: 'erik@example.com', birthday: '1985-06-15', employed: '2020-01-10', hourlyRate: 450, workLog: [] },
+                    { id: 'emp_2', name: 'Anders Andersson', position: 'Elektriker', phone: '070-234 5678', email: 'anders@example.com', birthday: '1990-03-22', employed: '2021-03-15', hourlyRate: 480, workLog: [] }
+                ];
+                localStorage.setItem('constructPro_employees', JSON.stringify(defaultEmployees));
+            }
+
+            loadCompanySettings();
+            renderDashboard();
+        }
+
+        function loadCompanySettings() {
+            if (settings.company) {
+                if (settings.company.name) document.getElementById('navCompName').innerText = settings.company.name;
+                if (settings.company.slogan) document.getElementById('navCompSlogan').innerText = settings.company.slogan;
+                if (settings.company.logo) document.getElementById('navLogo').innerHTML = `<img src="${settings.company.logo}" class="h-10 object-contain">`;
+            }
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboardContainer');
+            container.innerHTML = '';
+
+            // Default positions for cards - non-overlapping grid layout
+            const defaultPositions = {
+                calendar: { x: 20, y: 20, w: 320, h: 280 },
+                timer: { x: 20, y: 320, w: 320, h: 260 },
+                team: { x: 20, y: 600, w: 320, h: 180 },
+                tasks: { x: 360, y: 20, w: 300, h: 180 },
+                todo: { x: 360, y: 220, w: 300, h: 180 },
+                projects: { x: 360, y: 420, w: 300, h: 160 },
+                weather: { x: 680, y: 20, w: 220, h: 160 },
+                quote: { x: 680, y: 200, w: 220, h: 140 },
+                contacts: { x: 680, y: 360, w: 220, h: 120 }
+            };
+
+            // Load saved positions
+            let cardPositions = {};
+            try {
+                cardPositions = JSON.parse(localStorage.getItem('constructPro_cardPositions') || '{}');
+            } catch (e) { }
+
+            settings.dashboardCards.forEach((card, index) => {
+                const cardId = typeof card === 'string' ? card : card.id;
+                const pos = cardPositions[cardId] || defaultPositions[cardId] || { x: 20 + (index % 3) * 340, y: 20 + Math.floor(index / 3) * 240, w: 300, h: 200 };
+
+                const widgetNames = {
+                    calendar: translations[currentLang].calendar,
+                    projects: translations[currentLang].planned_projects,
+                    tasks: translations[currentLang].todays_plan,
+                    timer: translations[currentLang].time_report,
+                    todo: translations[currentLang].todo_list,
+                    quote: translations[currentLang].new_quote,
+                    contacts: translations[currentLang].quick_contact,
+                    weather: translations[currentLang].weather,
+                    km: translations[currentLang].km_tracking,
+                    messages: translations[currentLang].messages,
+                    team: translations[currentLang].team_status,
+                    notes: translations[currentLang].notes
+                };
+
+                const widgetIcons = {
+                    calendar: 'fa-calendar-alt text-orange-500',
+                    projects: 'fa-folder-open text-blue-500',
+                    tasks: 'fa-tasks text-indigo-500',
+                    timer: 'fa-clock text-slate-600',
+                    todo: 'fa-list-check text-red-500',
+                    quote: 'fa-file-invoice-dollar text-green-500',
+                    contacts: 'fa-address-book text-blue-500',
+                    weather: 'fa-cloud-sun text-cyan-500',
+                    km: 'fa-route text-green-500',
+                    messages: 'fa-envelope text-purple-500'
+                };
+
+                const content = getCardContent(cardId);
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card';
+                cardEl.id = 'card-' + cardId;
+                cardEl.style.cssText = `left:${pos.x}px; top:${pos.y}px; width:${pos.w}px; height:${pos.h}px;`;
+                cardEl.innerHTML = `
+                    <div class="drag-handle" onmousedown="startDrag(event, '${cardId}')">
+                        <span><i class="fas fa-grip-vertical"></i><i class="fas ${widgetIcons[cardId] || 'fa-square'}"></i> ${widgetNames[cardId] || cardId}</span>
+                    </div>
+                    <div class="card-content" onclick="cardClick('${cardId}')">${content}</div>
+                `;
+                container.appendChild(cardEl);
+
+                // Save size on resize
+                new ResizeObserver(entries => {
+                    const rect = entries[0].contentRect;
+                    saveCardPosition(cardId);
+                }).observe(cardEl);
+            });
+
+            // Ensure calendar is rendered after dashboard updates
+            setTimeout(() => {
+                if (typeof renderCalendar === 'function') renderCalendar();
+            }, 50);
+        }
+
+        function getCardContent(cardId) {
+            const t = translations[currentLang];
+            switch (cardId) {
+                case 'calendar':
+                    const calBtnBase = 'px-2 py-1 text-xs rounded-md transition font-medium';
+                    const calBtnActive = 'bg-orange-500 text-white shadow-sm';
+                    const calBtnInactive = 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+                    return `
+                        <div class="h-full flex flex-col">
+                            <div class="flex justify-between items-center mb-2 flex-shrink-0">
+                                <div class="flex gap-1">
+                                    <button onclick="event.stopPropagation(); calPrevMonth()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 flex items-center justify-center transition"><i class="fas fa-chevron-left"></i></button>
+                                    <button onclick="event.stopPropagation(); goToToday()" class="px-2 h-8 bg-orange-50 hover:bg-orange-100 rounded-lg text-orange-600 font-bold text-xs flex items-center justify-center transition">${t.today || 'Idag'}</button>
+                                    <button onclick="event.stopPropagation(); calNextMonth()" class="w-8 h-8 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-600 flex items-center justify-center transition"><i class="fas fa-chevron-right"></i></button>
+                                </div>
+                                <span id="calMonthYear" class="font-bold text-sm text-slate-700"></span>
+                                <div class="flex gap-1 bg-slate-50 p-0.5 rounded-lg">
+                                    <button id="btnDayView" onclick="event.stopPropagation(); setCalView('day')" class="${calBtnBase} ${calBtnInactive}" title="${t.day || 'Dag'}">
+                                        <i class="fas fa-calendar-day"></i>
+                                    </button>
+                                    <button id="btnWeekView" onclick="event.stopPropagation(); setCalView('week')" class="${calBtnBase} ${calBtnActive}" title="${t.week || 'Vecka'}">
+                                        <i class="fas fa-calendar-week"></i>
+                                    </button>
+                                    <button id="btnMonthView" onclick="event.stopPropagation(); setCalView('month')" class="${calBtnBase} ${calBtnInactive}" title="${t.month || 'Månad'}">
+                                        <i class="fas fa-calendar-alt"></i>
+                                    </button>
+                                    <button id="btnYearView" onclick="event.stopPropagation(); setCalView('year')" class="${calBtnBase} ${calBtnInactive}" title="${t.year || 'År'}">
+                                        <i class="fas fa-th"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="calBody" class="flex-1 overflow-hidden"></div>
+                        </div>`;
+                case 'projects':
+                    const projects = settings.projects || [];
+                    // Load quotes and filter projects that have a linked quote
+                    let dashQuotes = [];
+                    try { dashQuotes = JSON.parse(localStorage.getItem('constructPro_quotes') || '[]'); } catch (e) { }
+                    const dashQuoteIds = new Set(dashQuotes.map(q => q.id));
+                    // Filter: completed projects and projects without linked quotes
+                    const activeProj = projects.filter(p => p.status !== 'completed' && p.quoteId && dashQuoteIds.has(p.quoteId));
+                    // Use status-based colors: active = green, planned = orange
+                    return activeProj.slice(0, 3).map(p => {
+                        const statusColor = p.status === 'active' ? '#22c55e' : '#f97316';
+                        return `<div onclick="event.stopPropagation(); openModal('projectPlannerModal');" class="flex items-center gap-2 mb-2 cursor-pointer hover:bg-slate-50 rounded p-1 -m-1 transition"><div class="w-2 h-6 rounded" style="background:${p.color || statusColor}"></div><span class="text-sm">${p.name}</span><i class="fas fa-chevron-right text-slate-300 ml-auto text-xs"></i></div>`;
+                    }).join('') || '<p class="text-slate-400 text-sm">Inga aktiva projekt</p>';
+                case 'tasks':
+                    return `<div class="space-y-2"><div class="flex items-center justify-between p-2 bg-slate-50 rounded"><span>Gips och OSB</span><span class="text-orange-500 font-bold">60%</span></div><div class="flex items-center justify-between p-2 bg-slate-50 rounded"><span>Isolering</span><span class="text-blue-500 font-bold">20%</span></div></div>`;
+                case 'timer':
+                    const workActive = timerMode === 'work';
+                    const transActive = timerMode === 'transport';
+                    const tTimer = translations[currentLang] || translations['sv'];
+
+                    const clsWork = workActive
+                        ? 'px-2 py-0.5 text-xs rounded bg-slate-700 text-white font-bold transition shadow-sm'
+                        : 'px-2 py-0.5 text-xs rounded hover:bg-slate-200 text-slate-500 transition';
+
+                    const clsTrans = transActive
+                        ? 'px-2 py-0.5 text-xs rounded bg-blue-600 text-white font-bold transition shadow-sm'
+                        : 'px-2 py-0.5 text-xs rounded hover:bg-slate-200 text-slate-500 transition';
+
+                    const btnClass = timerRunning
+                        ? 'w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-red-500/30 flex items-center justify-center gap-2'
+                        : 'w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-green-500/30 flex items-center justify-center gap-2';
+
+                    const btnLabel = timerRunning
+                        ? `<i class="fas fa-stop"></i> <span>STOPP</span>`
+                        : `<i class="fas fa-play"></i> <span data-i18n="start">${tTimer.start || 'START'}</span>`;
+
+                    const statusText = workActive
+                        ? (tTimer.ready_work || 'Redo för arbete')
+                        : (tTimer.ready_transport || 'Redo för resa');
+
+                    const runningText = workActive
+                        ? 'Arbete pågår...'
+                        : 'Resa pågår...';
+
+                    // Get projects for dropdown
+                    const timerSettings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+                    const projectList = timerSettings.projects || [];
+                    const projectOptions = projectList.map(p =>
+                        `<option value="${p.name}" ${timerProject === p.name ? 'selected' : ''}>${p.name}</option>`
+                    ).join('');
+
+                    // Get cars for transport mode
+                    const carList = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                    const timerCar = localStorage.getItem('constructPro_timerCar') || '';
+                    const carOptions = carList.map(c =>
+                        `<option value="${c.id}" ${timerCar === c.id ? 'selected' : ''}>${c.reg} (${c.model || c.brand || ''})</option>`
+                    ).join('');
+
+                    // Mode button styling with icons
+                    const clsWorkBtn = workActive
+                        ? 'flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-green-600 text-white font-bold transition shadow-md border-2 border-green-700'
+                        : 'flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white hover:bg-green-50 text-slate-600 transition border border-slate-200';
+
+                    const clsTransBtn = transActive
+                        ? 'flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-blue-600 text-white font-bold transition shadow-md border-2 border-blue-700'
+                        : 'flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg bg-white hover:bg-blue-50 text-slate-600 transition border border-slate-200';
+
+                    return `
+                        <div class="h-full flex flex-col">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="font-bold text-slate-700 text-sm uppercase"><i class="fas fa-stopwatch mr-2"></i><span data-i18n="time_report">${tTimer.time_report || 'Tidrapport'}</span></h3>
+                            </div>
+                            <div class="flex gap-2 mb-3">
+                                <button id="modeWork" onclick="setTimerMode('work')" class="${clsWorkBtn}">
+                                    <i class="fas fa-hard-hat"></i>
+                                    <span>${tTimer.mode_work || 'Bygge'}</span>
+                                    ${workActive ? '<i class="fas fa-check-circle text-green-200"></i>' : ''}
+                                </button>
+                                <button id="modeTransport" onclick="setTimerMode('transport')" class="${clsTransBtn}">
+                                    <i class="fas fa-car"></i>
+                                    <span>${tTimer.mode_transport || 'Resa'}</span>
+                                    ${transActive ? '<i class="fas fa-check-circle text-blue-200"></i>' : ''}
+                                </button>
+                            </div>
+                            <div class="mb-3 ${workActive ? '' : 'hidden'}" id="projectSelectContainer">
+                                <label class="text-xs text-slate-500 block mb-1"><i class="fas fa-folder-open mr-1"></i>${tTimer.project || 'Projekt'}</label>
+                                <select id="timerProjectSelect" onchange="setTimerProject(this.value)" class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm bg-white ${timerRunning ? 'opacity-50 pointer-events-none' : ''}">
+                                    <option value="">${tTimer.select_project || 'Välj projekt...'}</option>
+                                    ${projectOptions}
+                                </select>
+                            </div>
+                            <div class="mb-3 ${transActive ? '' : 'hidden'}" id="carSelectContainer">
+                                <label class="text-xs text-slate-500 block mb-1"><i class="fas fa-car mr-1"></i>${tTimer.car || 'Bil'}</label>
+                                <select id="timerCarSelect" onchange="setTimerCar(this.value)" class="w-full border border-slate-200 rounded px-2 py-1.5 text-sm bg-white ${timerRunning ? 'opacity-50 pointer-events-none' : ''}">
+                                    <option value="">${tTimer.select_car || 'Välj bil...'}</option>
+                                    ${carOptions}
+                                </select>
+                            </div>
+                            <div class="flex-1 flex flex-col justify-center items-center">
+                                <button onclick="openEditStartModal()" class="text-4xl font-mono font-bold mb-2 tracking-wider hover:text-blue-200 transition tooltip-container relative" id="workTimer" title="${tTimer.click_edit_time || 'Klicka för att ändra starttid'}">
+                                    00:00:00
+                                </button>
+                                <div class="text-xs text-slate-400 mb-4" id="timerStatus" data-i18n="ready_work">${timerRunning ? runningText : statusText}</div>
+                                <button id="timerBtn" onclick="toggleTimer()" class="${btnClass}">
+                                    ${btnLabel}
+                                </button>
+                            </div>
+                        </div>`;
+                case 'team':
+                    const teamState = JSON.parse(localStorage.getItem('constructPro_timerState') || '{}');
+                    const isRunning = teamState.running;
+                    const mode = teamState.mode || 'work';
+                    const modeText = mode === 'work' ? 'På bygget' : 'På väg';
+                    const modeColor = mode === 'work' ? 'text-green-500' : 'text-blue-500';
+                    const modeIcon = mode === 'work' ? 'fa-hammer' : 'fa-car';
+
+                    return `
+                        <div class="h-full flex flex-col">
+                            <h3 class="font-bold text-slate-700 mb-3 text-sm uppercase"><i class="fas fa-users-cog mr-2"></i>Team Status</h3>
+                            <div class="space-y-3 overflow-y-auto flex-1 pr-1">
+                                <div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-600">DU</div>
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-700">Du (Administratör)</p>
+                                            <p class="text-xs ${isRunning ? modeColor : 'text-slate-400'}">
+                                                ${isRunning ? `<i class="fas ${modeIcon} mr-1"></i>${modeText}` : '<i class="fas fa-bed mr-1"></i>Utcheckad'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="w-3 h-3 rounded-full ${isRunning ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}"></div>
+                                </div>
+                                <div class="flex items-center justify-between p-2 opacity-60">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center font-bold text-xs text-orange-600">EE</div>
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-700">Erik Eriksson</p>
+                                            <p class="text-xs text-orange-500"><i class="fas fa-hammer mr-1"></i>På bygget</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-3 h-3 rounded-full bg-orange-400"></div>
+                                </div>
+                                <div class="flex items-center justify-between p-2 opacity-60">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-xs text-blue-600">AA</div>
+                                        <div>
+                                            <p class="font-bold text-sm text-slate-700">Anders Andersson</p>
+                                            <p class="text-xs text-blue-500"><i class="fas fa-car mr-1"></i>På väg</p>
+                                        </div>
+                                    </div>
+                                    <div class="w-3 h-3 rounded-full bg-blue-400"></div>
+                                </div>
+                            </div>
+                        </div>`;
+                case 'todo':
+                    return todos.slice(0, 4).map(todo => `<div class="flex gap-2 items-center mb-2"><input type="checkbox" ${todo.done ? 'checked' : ''}><span class="${todo.done ? 'line-through text-slate-400' : ''}">${todo.text}</span></div>`).join('') || '<p class="text-slate-400 text-sm">Inga uppgifter</p>';
+                case 'quote':
+                    return `<a href="oferta.html" class="flex flex-col items-center justify-center h-full text-center bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-lg p-4 no-underline hover:scale-[1.02] transition"><i class="fas fa-file-invoice-dollar text-3xl mb-2"></i><span class="font-bold">${t.new_quote}</span></a>`;
+                case 'contacts':
+                    return `<div class="grid grid-cols-3 gap-2"><a href="tel:" class="bg-slate-50 p-3 rounded-lg text-center hover:bg-green-50"><i class="fas fa-phone text-green-500"></i></a><a href="sms:" class="bg-slate-50 p-3 rounded-lg text-center hover:bg-blue-50"><i class="fas fa-comment text-blue-500"></i></a><a href="#" class="bg-slate-50 p-3 rounded-lg text-center hover:bg-green-50"><i class="fab fa-whatsapp text-green-500"></i></a></div>`;
+                case 'weather':
+                    if (weatherData && weatherData.current && weatherData.daily) {
+                        const current = weatherData.current;
+                        const daily = weatherData.daily;
+                        const icon = weatherIcons[current.weather_code] || '🌡️';
+                        const temp = Math.round(current.temperature_2m);
+                        const locName = weatherLocation.name || t.city || 'Plats';
+                        const lang = currentLang || 'sv';
+                        const days = dayNames[lang] || dayNames.sv;
+                        // 3-day mini forecast
+                        const forecast3 = daily.time.slice(0, 3).map((date, i) => {
+                            const d = new Date(date);
+                            const dayName = i === 0 ? (t.today || 'Idag') : days[d.getDay()];
+                            const ic = weatherIcons[daily.weather_code[i]] || '🌡️';
+                            const maxT = Math.round(daily.temperature_2m_max[i]);
+                            return `<div class="text-center"><p class="text-[10px] text-slate-500">${dayName}</p><p class="text-lg">${ic}</p><p class="text-xs font-bold">${maxT}°</p></div>`;
+                        }).join('');
+                        return `
+                            <div class="h-full flex flex-col justify-between">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-2xl font-bold text-slate-800">${temp}°C</p>
+                                        <p class="text-xs text-slate-500">${locName}</p>
+                                    </div>
+                                    <span class="text-4xl">${icon}</span>
+                                </div>
+                                <div class="flex justify-between mt-2 pt-2 border-t border-slate-100">${forecast3}</div>
+                            </div>`;
+                    } else {
+                        return `
+                            <div class="flex items-center justify-between">
+                                <div><p class="text-2xl font-bold text-slate-800">--°C</p><p class="text-xs text-slate-500">${t.city || 'Laddar...'}</p></div>
+                                <span class="text-4xl">⏳</span>
+                            </div>`;
+                    }
+                default:
+                    return '';
+            }
+        }
+
+        function cardClick(cardId) {
+            if (cardId === 'calendar') openModal('calendarModal');
+            else if (cardId === 'projects') openModal('projectPlannerModal');
+            else if (cardId === 'todo') openModal('todoModal');
+            else if (cardId === 'weather') openModal('weatherModal');
+        }
+
+        // Drag functionality
+        let dragData = null;
+
+        function startDrag(e, cardId) {
+            const card = document.getElementById('card-' + cardId);
+            card.classList.add('dragging');
+            dragData = {
+                cardId,
+                startX: e.clientX,
+                startY: e.clientY,
+                origX: card.offsetLeft,
+                origY: card.offsetTop
+            };
+            document.addEventListener('mousemove', onDrag);
+            document.addEventListener('mouseup', endDrag);
+            e.preventDefault();
+        }
+
+        function onDrag(e) {
+            if (!dragData) return;
+            const card = document.getElementById('card-' + dragData.cardId);
+            const dx = e.clientX - dragData.startX;
+            const dy = e.clientY - dragData.startY;
+
+            // Calculate new position (no snapping during drag for smooth movement)
+            let newX = Math.max(0, dragData.origX + dx);
+            let newY = Math.max(0, dragData.origY + dy);
+
+            card.style.left = newX + 'px';
+            card.style.top = newY + 'px';
+        }
+
+        const GRID_SIZE = 20; // Snap to 20px grid
+
+        function snapToGrid(value) {
+            return Math.round(value / GRID_SIZE) * GRID_SIZE;
+        }
+
+        function endDrag() {
+            if (dragData) {
+                const card = document.getElementById('card-' + dragData.cardId);
+                card.classList.remove('dragging');
+
+                // Snap to grid on drop
+                const snappedX = snapToGrid(card.offsetLeft);
+                const snappedY = snapToGrid(card.offsetTop);
+                card.style.left = snappedX + 'px';
+                card.style.top = snappedY + 'px';
+
+                // Resolve collisions with other cards
+                resolveCardCollisions(dragData.cardId);
+
+                saveCardPosition(dragData.cardId);
+                dragData = null;
+            }
+            document.removeEventListener('mousemove', onDrag);
+            document.removeEventListener('mouseup', endDrag);
+        }
+
+        // Check if two rectangles overlap
+        function rectsOverlap(r1, r2) {
+            return !(r1.right <= r2.left || r2.right <= r1.left || r1.bottom <= r2.top || r2.bottom <= r1.top);
+        }
+
+        // Resolve collisions by pushing overlapping cards
+        function resolveCardCollisions(movedCardId) {
+            const movedCard = document.getElementById('card-' + movedCardId);
+            if (!movedCard) return;
+
+            const movedRect = {
+                left: movedCard.offsetLeft,
+                top: movedCard.offsetTop,
+                right: movedCard.offsetLeft + movedCard.offsetWidth,
+                bottom: movedCard.offsetTop + movedCard.offsetHeight
+            };
+
+            // Get all other cards
+            const container = document.getElementById('dashboardContainer');
+            const allCards = container.querySelectorAll('.card');
+
+            allCards.forEach(otherCard => {
+                if (otherCard.id === 'card-' + movedCardId) return;
+
+                const otherRect = {
+                    left: otherCard.offsetLeft,
+                    top: otherCard.offsetTop,
+                    right: otherCard.offsetLeft + otherCard.offsetWidth,
+                    bottom: otherCard.offsetTop + otherCard.offsetHeight
+                };
+
+                if (rectsOverlap(movedRect, otherRect)) {
+                    // Calculate push direction - push to nearest edge
+                    const pushLeft = movedRect.right - otherRect.left;
+                    const pushRight = otherRect.right - movedRect.left;
+                    const pushUp = movedRect.bottom - otherRect.top;
+                    const pushDown = otherRect.bottom - movedRect.top;
+
+                    const minPush = Math.min(pushLeft, pushRight, pushUp, pushDown);
+
+                    let newX = otherCard.offsetLeft;
+                    let newY = otherCard.offsetTop;
+
+                    if (minPush === pushLeft) {
+                        // Push other card to the right of moved card
+                        newX = snapToGrid(movedRect.right + GRID_SIZE);
+                    } else if (minPush === pushRight) {
+                        // Push other card to the left of moved card
+                        newX = snapToGrid(movedRect.left - otherCard.offsetWidth - GRID_SIZE);
+                    } else if (minPush === pushUp) {
+                        // Push other card below moved card
+                        newY = snapToGrid(movedRect.bottom + GRID_SIZE);
+                    } else {
+                        // Push other card above moved card
+                        newY = snapToGrid(movedRect.top - otherCard.offsetHeight - GRID_SIZE);
+                    }
+
+                    // Ensure card stays in bounds
+                    newX = Math.max(0, newX);
+                    newY = Math.max(0, newY);
+
+                    otherCard.style.left = newX + 'px';
+                    otherCard.style.top = newY + 'px';
+
+                    // Save pushed card position
+                    const otherId = otherCard.id.replace('card-', '');
+                    saveCardPosition(otherId);
+                }
+            });
+        }
+
+        function saveCardPosition(cardId) {
+            const card = document.getElementById('card-' + cardId);
+            if (!card) return;
+
+            // Snap size to grid as well
+            const snappedW = snapToGrid(card.offsetWidth);
+            const snappedH = snapToGrid(card.offsetHeight);
+            card.style.width = snappedW + 'px';
+            card.style.height = snappedH + 'px';
+
+            let positions = {};
+            try { positions = JSON.parse(localStorage.getItem('constructPro_cardPositions') || '{}'); } catch (e) { }
+            positions[cardId] = {
+                x: snapToGrid(card.offsetLeft),
+                y: snapToGrid(card.offsetTop),
+                w: snappedW,
+                h: snappedH
+            };
+            localStorage.setItem('constructPro_cardPositions', JSON.stringify(positions));
+        }
+
+        // ===== CARD RENDERERS =====
+        function renderCalendarCard(sizeClass = '') {
+            const t = translations[currentLang];
+            const monthIndex = new Date().getMonth();
+            return `
+                <div class="card p-5 ${sizeClass}" onclick="openModal('projectPlannerModal')">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="font-bold text-slate-700 flex items-center gap-2"><i class="far fa-calendar-alt text-orange-500"></i> ${t.calendar}</h2>
+                        <span class="text-xs font-bold bg-slate-100 px-3 py-1 rounded-full text-slate-600">${t.months[monthIndex]}</span>
+                    </div>
+                    <div id="calBody" class="text-xs select-none"></div>
+                </div>`;
+        }
+
+        function renderProjectsCard(sizeClass = '') {
+            const t = translations[currentLang];
+            const projects = settings.projects || [];
+            const activeProj = projects.filter(p => p.status === 'active' || p.status === 'planned').slice(0, 2);
+            return `
+                <div class="card p-4 ${sizeClass}" onclick="openModal('projectPlannerModal')">
+                    <h3 class="font-bold text-slate-700 text-sm mb-3"><i class="fas fa-folder-open text-blue-500 mr-2"></i>${t.planned_projects}</h3>
+                    ${activeProj.length > 0 ? activeProj.map(p => `
+                        <div class="flex items-center p-2 hover:bg-orange-50 rounded-lg mb-2">
+                            <div class="w-2 h-8 rounded-full mr-3" style="background:${p.color}"></div>
+                            <div>
+                                <p class="font-bold text-sm text-slate-700">${p.name}</p>
+                                <p class="text-xs text-slate-500">${p.client}</p>
+                            </div>
+                        </div>`).join('') : `<p class="text-sm text-slate-400 text-center py-4">${t.no_projects || 'Inga projekt'}</p>`}
+                </div>`;
+        }
+
+        function renderTasksCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-5 ${sizeClass}">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fas fa-tasks text-indigo-500"></i> ${t.todays_plan}</h2>
+                        <span class="bg-green-100 text-green-700 text-xs px-2 py-1 rounded font-bold uppercase">${t.in_progress}</span>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div><p class="font-medium text-slate-700">${t.gypsum_osb || 'Gips och OSB'}</p><p class="text-xs text-slate-400">${t.assembly || 'Montage'}</p></div>
+                            <div class="flex items-center gap-2"><span class="text-sm font-bold text-orange-500">60%</span></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                            <div><p class="font-medium text-slate-700">${t.insulation || 'Isolering'}</p><p class="text-xs text-slate-400">${t.mineral_wool || 'Mineralull'}</p></div>
+                            <div class="flex items-center gap-2"><span class="text-sm font-bold text-blue-500">20%</span></div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderTimerCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-0 overflow-hidden ${sizeClass}">
+                    <div class="bg-slate-800 text-white p-4 rounded-lg h-full flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xs uppercase text-slate-400 font-bold" data-i18n="time_report">${t.time_report || 'Tidrapport'}</span>
+                            <div class="flex bg-slate-700 rounded p-0.5">
+                                <button id="modeWork" onclick="setTimerMode('work')" class="px-2 py-0.5 text-xs rounded bg-blue-500 text-white transition">${t.site || 'Bygge'}</button>
+                                <button id="modeTransport" onclick="setTimerMode('transport')" class="px-2 py-0.5 text-xs rounded hover:bg-slate-600 text-slate-300 transition">${t.transport || 'Resa'}</button>
+                            </div>
+                        </div>
+                        <div class="flex-1 flex flex-col justify-center items-center">
+                            <button onclick="openEditStartModal()" class="text-4xl font-mono font-bold mb-2 tracking-wider hover:text-blue-200 transition tooltip-container relative" id="workTimer" title="Klicka för att ändra starttid">
+                                00:00:00
+                            </button>
+                            <div class="text-xs text-slate-400 mb-4" id="timerStatus" data-i18n="ready_work">${t.ready_work || 'Redo för arbete'}</div>
+                            <button id="timerBtn" onclick="toggleTimer()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-lg transition shadow-lg shadow-green-500/30 flex items-center justify-center gap-2">
+                                <i class="fas fa-play"></i> <span data-i18n="start">${t.start || 'START'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderTeamCard(sizeClass = '') {
+            const t = translations[currentLang];
+            const teamState = JSON.parse(localStorage.getItem('constructPro_timerState') || '{}');
+            const isRunning = teamState.running;
+            const mode = teamState.mode || 'work';
+            const modeText = mode === 'work' ? (t.on_site || 'På bygget') : (t.on_way || 'På väg');
+            const modeColor = mode === 'work' ? 'text-green-500' : 'text-blue-500';
+            const modeIcon = mode === 'work' ? 'fa-hammer' : 'fa-car';
+            const yourRole = t.admin || 'Admin';
+
+            return `
+                <div class="card p-4 ${sizeClass}">
+                    <div class="h-full flex flex-col">
+                        <h3 class="font-bold text-slate-700 mb-3 text-sm uppercase"><i class="fas fa-users-cog mr-2"></i>${t.team_status || 'Team Status'}</h3>
+                        <div class="space-y-3 overflow-y-auto flex-1 pr-1">
+                            <div class="flex items-center justify-between p-2 bg-slate-50 rounded border border-slate-100">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-xs text-slate-600">${(t.you || 'Du').substring(0, 2).toUpperCase()}</div>
+                                    <div>
+                                        <p class="font-bold text-sm text-slate-700">${t.you || 'Du'} (${yourRole})</p>
+                                        <p class="text-xs ${isRunning ? modeColor : 'text-slate-400'}">
+                                            ${isRunning ? `<i class="fas ${modeIcon} mr-1"></i>${modeText}` : `<i class="fas fa-bed mr-1"></i>${t.checked_out || 'Utcheckad'}`}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full ${isRunning ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}"></div>
+                            </div>
+                            <!-- Mock employees -->
+                            <div class="flex items-center justify-between p-2 opacity-60">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center font-bold text-xs text-orange-600">EE</div>
+                                    <div>
+                                        <p class="font-bold text-sm text-slate-700">Erik Eriksson</p>
+                                        <p class="text-xs text-orange-500"><i class="fas fa-hammer mr-1"></i>${t.on_site || 'På bygget'}</p>
+                                    </div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-orange-400"></div>
+                            </div>
+                            <div class="flex items-center justify-between p-2 opacity-60">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-xs text-blue-600">AA</div>
+                                    <div>
+                                        <p class="font-bold text-sm text-slate-700">Anders Andersson</p>
+                                        <p class="text-xs text-blue-500"><i class="fas fa-car mr-1"></i>${t.on_way || 'På väg'}</p>
+                                    </div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-blue-400"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderTodoCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 ${sizeClass}" onclick="openModal('todoModal')">
+                    <h3 class="font-bold text-slate-700 mb-3 flex justify-between"><span><i class="fas fa-list-check text-red-500 mr-2"></i>${t.todo_list}</span>
+                        <span class="bg-red-100 text-red-600 text-[10px] px-2 py-0.5 rounded-full">${todos.length}</span>
+                    </h3>
+                    <ul class="space-y-2 text-sm">
+                        ${todos.slice(0, 3).map(todo => `<li class="flex gap-2 text-xs"><input type="checkbox" ${todo.done ? 'checked' : ''}><span class="${todo.done ? 'line-through text-slate-400' : ''}">${todo.text}</span></li>`).join('')}
+                    </ul>
+                </div>`;
+        }
+
+        function renderQuoteCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `<a href="oferta.html" class="card bg-gradient-to-r from-indigo-600 to-blue-600 text-white p-5 flex items-center justify-center gap-3 hover:scale-[1.02] no-underline ${sizeClass}">
+                <div class="bg-white/20 p-3 rounded-full"><i class="fas fa-file-invoice-dollar text-2xl"></i></div>
+                <span class="font-bold">${t.new_quote}</span>
+            </a>`;
+        }
+
+        function renderContactsCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 border-l-4 border-l-blue-500 ${sizeClass}">
+                    <h3 class="font-bold text-slate-700 mb-3 text-sm">${t.quick_contact}</h3>
+                    <div class="grid grid-cols-3 gap-2">
+                        <a href="tel:" class="bg-slate-50 hover:bg-green-50 text-slate-600 hover:text-green-600 flex flex-col items-center p-2 rounded-lg"><i class="fas fa-phone-alt mb-1"></i><span class="text-[10px] font-bold">${t.call}</span></a>
+                        <a href="sms:" class="bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 flex flex-col items-center p-2 rounded-lg"><i class="fas fa-comment-alt mb-1"></i><span class="text-[10px] font-bold">SMS</span></a>
+                        <a href="#" class="bg-slate-50 hover:bg-green-50 text-slate-600 hover:text-green-500 flex flex-col items-center p-2 rounded-lg"><i class="fab fa-whatsapp mb-1 text-lg"></i><span class="text-[10px] font-bold">WApp</span></a>
+                    </div>
+                </div>`;
+        }
+
+        function renderWeatherCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 bg-gradient-to-br from-cyan-50 to-blue-50 ${sizeClass}" onclick="openModal('weatherModal')">
+                    <div class="flex items-center justify-between">
+                        <div><p class="text-2xl font-bold text-slate-800">12°C</p><p class="text-xs text-slate-500">${t.city || 'Stad'}</p></div>
+                        <span class="text-4xl">☀️</span>
+                    </div>
+                </div>`;
+        }
+
+        function renderKmCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 bg-gradient-to-br from-green-50 to-emerald-50 ${sizeClass}" onclick="openModal('kmModal')">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-green-500 text-white rounded-xl flex items-center justify-center"><i class="fas fa-route text-xl"></i></div>
+                        <div><p class="text-xl font-bold text-slate-800">45 km</p><p class="text-xs text-slate-500">${t.today || 'Idag'}</p></div>
+                    </div>
+                </div>`;
+        }
+
+        function renderMessagesCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 ${sizeClass}" onclick="openModal('messagesModal')">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-purple-500 text-white rounded-xl flex items-center justify-center"><i class="fas fa-envelope"></i></div>
+                            <div><p class="font-bold text-slate-700">${t.messages || 'Meddelanden'}</p><p class="text-xs text-slate-500">3 ${t.new_count || 'nya'}</p></div>
+                        </div>
+                        <span class="bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center font-bold">3</span>
+                    </div>
+                </div>`;
+        }
+
+        function renderWhatsappCard(sizeClass = '') { return renderMessagesCard(sizeClass); }
+        function renderSmsCard(sizeClass = '') { return renderMessagesCard(sizeClass); }
+        function renderMailCard(sizeClass = '') { return renderMessagesCard(sizeClass); }
+
+        function renderNotesCard(sizeClass = '') {
+            const t = translations[currentLang];
+            return `
+                <div class="card p-4 bg-yellow-50 ${sizeClass}">
+                    <div class="flex items-center gap-2 mb-2"><i class="fas fa-sticky-note text-yellow-500"></i><span class="font-bold text-slate-700">${t.notes || 'Anteckningar'}</span></div>
+                    <p class="text-sm text-slate-600">${t.notes_sample || 'Glöm inte att ringa leverantören...'}</p>
+                </div>`;
+        }
+
+        // ===== MODALS =====
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if (id === 'projectPlannerModal') renderGanttChart();
+            if (id === 'todoModal') renderTodoList();
+            if (id === 'calendarModal') {
+                if (typeof modalCalDate !== 'undefined') modalCalDate = new Date();
+                if (typeof renderModalCalendar === 'function') renderModalCalendar();
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Close modal on backdrop click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', e => { if (e.target === modal) closeModal(modal.id); });
+        });
+
+        // ===== GANTT CHART =====
+        let ganttViewMode = 'month'; // 'week', 'month'
+        let ganttStartDate = new Date();
+        ganttStartDate.setDate(ganttStartDate.getDate() - 5); // Start 5 days ago by default
+        let expandedGanttProjects = new Set();
+
+        function toggleGanttProject(id) {
+            if (expandedGanttProjects.has(id)) expandedGanttProjects.delete(id);
+            else expandedGanttProjects.add(id);
+            renderGanttChart();
+        }
+
+        function changeGanttView(mode) {
+            ganttViewMode = mode;
+            renderGanttChart();
+
+            // Update buttons
+            const btns = document.querySelectorAll('#projectPlannerModal button[onclick^="changeGanttView"]');
+            btns.forEach(btn => {
+                if (btn.getAttribute('onclick').includes(mode)) {
+                    btn.classList.add('bg-orange-500', 'text-white');
+                    btn.classList.remove('bg-slate-100');
+                } else {
+                    btn.classList.remove('bg-orange-500', 'text-white');
+                    btn.classList.add('bg-slate-100');
+                }
+            });
+        }
+
+        function shiftGanttDate(days) {
+            ganttStartDate.setDate(ganttStartDate.getDate() + days);
+            renderGanttChart();
+        }
+
+        function renderGanttChart() {
+            const projects = settings.projects || [];
+            const header = document.getElementById('ganttHeader');
+            const body = document.getElementById('ganttBody');
+
+            // Determine visible range based on view mode
+            const rangeDays = ganttViewMode === 'week' ? 14 : 30; // Show 2 weeks or 1 month
+
+            // Generate days
+            const days = [];
+            const today = new Date();
+            for (let i = 0; i < rangeDays; i++) {
+                const d = new Date(ganttStartDate);
+                d.setDate(ganttStartDate.getDate() + i);
+                days.push(d);
+            }
+
+            // Render header with navigation
+            let headerHtml = `
+                <div class="p-2 font-medium text-slate-600 border-r bg-slate-50 flex items-center justify-between" style="width:200px">
+                    <span>Projekt</span>
+                    <div class="flex gap-1">
+                        <button onclick="shiftGanttDate(-7)" class="w-6 h-6 flex items-center justify-center bg-white border rounded hover:bg-slate-100"><i class="fas fa-chevron-left text-xs"></i></button>
+                        <button onclick="shiftGanttDate(7)" class="w-6 h-6 flex items-center justify-center bg-white border rounded hover:bg-slate-100"><i class="fas fa-chevron-right text-xs"></i></button>
+                    </div>
+                </div>`;
+
+            headerHtml += days.map(d => {
+                const isToday = d.toDateString() === today.toDateString();
+                const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                let bgClass = '';
+                if (isToday) bgClass = 'bg-blue-100 font-bold';
+                else if (isWeekend) bgClass = 'bg-slate-50 text-slate-400';
+
+                return `<div class="p-1 text-center text-xs text-slate-500 border-r ${bgClass}" style="width:30px">
+                    <div class="text-[10px]">${['S', 'M', 'T', 'O', 'T', 'F', 'L'][d.getDay()]}</div>
+                    ${d.getDate()}
+                </div>`;
+            }).join('');
+
+            header.innerHTML = headerHtml;
+            header.style.gridTemplateColumns = `200px repeat(${days.length}, 30px)`;
+
+            // Load quotes to filter projects
+            let quotes = [];
+            try { quotes = JSON.parse(localStorage.getItem('constructPro_quotes') || '[]'); } catch (e) { }
+            const quoteIds = new Set(quotes.map(q => q.id));
+
+            // Filter: only show active/planned projects that have a linked quote
+            const activeProjects = projects.filter(p => p.status !== 'completed' && p.quoteId && quoteIds.has(p.quoteId));
+
+            // Render project rows
+            if (activeProjects.length === 0) {
+                body.innerHTML = '<div class="p-8 text-center text-slate-400"><i class="fas fa-project-diagram text-4xl mb-2"></i><p>Inga aktiva projekt. Lägg till via Inställningar.</p></div>';
+                return;
+            }
+
+            // Grid background style
+            const gridBg = `background-image: repeating-linear-gradient(to right, transparent 0px, transparent 29px, #e2e8f0 29px, #e2e8f0 30px); background-attachment: local;`;
+
+            body.innerHTML = '';
+            activeProjects.forEach(proj => {
+                const startDate = new Date(proj.startDate);
+                const endDate = new Date(proj.endDate);
+                const dayStart = Math.floor((startDate - days[0]) / (1000 * 60 * 60 * 24));
+                const totalDuration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+                const hasPhases = proj.phases && proj.phases.length > 0;
+
+                // Status-based color: planned = orange, active = green
+                const statusColor = proj.status === 'active' ? '#22c55e' : '#f97316';
+                const barColor = proj.color || statusColor;
+
+                // 1. Main Project Row (Header) - Clickable to open details
+                body.innerHTML += `
+                    <div class="gantt-row flex items-center border-b border-slate-200 bg-gradient-to-r from-slate-100 to-white hover:from-slate-200 hover:to-slate-50 transition h-10 cursor-pointer" onclick="openProjectDetails('${proj.id}')">
+                        <div class="px-3 text-sm font-bold text-slate-800 border-r bg-gradient-to-r from-slate-100 to-white z-10 sticky left-0 flex items-center gap-2" style="width:200px;flex-shrink:0">
+                            <span class="w-3 h-3 rounded" style="background:${barColor}"></span>
+                            <div class="truncate select-none" title="${proj.name}">${proj.name}</div>
+                            <i class="fas fa-chevron-right text-slate-300 ml-auto text-xs"></i>
+                        </div>
+                        <div class="flex-1 relative h-full" style="${gridBg}">
+                            ${!hasPhases && totalDuration > 0 ? `<div class="gantt-bar rounded-md shadow-sm" style="left:${dayStart * 30}px; width:${totalDuration * 30}px; background:${barColor}; top:10px; height:20px;" title="${proj.name}"></div>` : ''}
+                        </div>
+                    </div>`;
+
+                // 2. Phase Rows - Always visible for projects with phases
+                if (hasPhases) {
+                    proj.phases.forEach(phase => {
+                        const phaseStart = (dayStart + phase.startDay) * 30;
+                        const phaseWidth = phase.days * 30;
+
+                        body.innerHTML += `
+                            <div class="gantt-row flex items-center border-b border-slate-50 bg-white hover:bg-slate-50 transition h-8">
+                                <div class="px-2 pl-6 text-xs text-slate-600 border-r bg-white z-10 sticky left-0 flex items-center gap-2" style="width:200px;flex-shrink:0">
+                                    <span class="w-2 h-2 rounded" style="background:${phase.color}"></span>
+                                    <div class="truncate" title="${phase.name}">${phase.name}</div>
+                                </div>
+                                <div class="flex-1 relative h-full" style="${gridBg}">
+                                    <div class="gantt-bar rounded text-[10px] flex items-center text-white shadow-sm overflow-hidden whitespace-nowrap px-2" 
+                                        style="left:${phaseStart}px; width:${phaseWidth}px; background:${phase.color}; top:4px; height:22px;" 
+                                        title="${phase.name}: ${Math.round(phase.hours)}h (${phase.days} dagar)">
+                                        ${phaseWidth > 50 ? phase.name : ''}
+                                    </div>
+                                </div>
+                            </div>`;
+                    });
+                }
+            });
+        }
+
+        // Open Project Details Modal - Shows all connected quote data
+        function openProjectDetails(projectId) {
+            const projects = settings.projects || [];
+            const proj = projects.find(p => p.id === projectId);
+            if (!proj) return;
+
+            // Get client details if available
+            let clients = [];
+            try { clients = JSON.parse(localStorage.getItem('constructPro_kunder') || '[]'); } catch (e) { }
+            const client = clients.find(c => c.id === proj.clientId) || {};
+
+            // Populate header
+            document.getElementById('projectDetailsName').textContent = proj.name;
+
+            // Client info
+            document.getElementById('projectDetailsClient').textContent = proj.clientName || client.name || '-';
+            document.getElementById('projectDetailsAddress').textContent = proj.address || client.address || '-';
+            document.getElementById('projectDetailsClientPhone').innerHTML = client.phone
+                ? '<i class="fas fa-phone mr-1"></i>' + client.phone
+                : (client.email ? '<i class="fas fa-envelope mr-1"></i>' + client.email : '-');
+
+            // Timeline
+            document.getElementById('projectDetailsStart').textContent = proj.startDate || '-';
+            document.getElementById('projectDetailsEnd').textContent = proj.endDate || '-';
+            const statusLabels = { planned: 'Planerad', active: 'Pågående', completed: 'Avslutad' };
+            const statusColors = { planned: 'text-orange-600', active: 'text-green-600', completed: 'text-slate-500' };
+            document.getElementById('projectDetailsStatus').innerHTML =
+                `<span class="${statusColors[proj.status] || ''}">${statusLabels[proj.status] || proj.status}</span>`;
+
+            // Items
+            const items = proj.items || [];
+            if (items.length > 0) {
+                let html = '<table class="w-full text-sm"><thead class="bg-slate-100"><tr><th class="text-left p-2">Moment</th><th class="text-right p-2">Antal</th><th class="text-right p-2">Pris</th></tr></thead><tbody>';
+                items.forEach(item => {
+                    const labor = item.laborPrice || 0;
+                    const material = item.materialPrice || 0;
+                    html += `<tr class="border-t"><td class="p-2">${item.name || '-'}</td><td class="text-right p-2">${item.qty || 1} ${item.unit || 'st'}</td><td class="text-right p-2 font-medium text-green-600">${Math.round(labor + material).toLocaleString()} kr</td></tr>`;
+                });
+                html += '</tbody></table>';
+                document.getElementById('projectDetailsItems').innerHTML = html;
+            } else {
+                document.getElementById('projectDetailsItems').innerHTML = '<p class="text-slate-400">Inga arbetsmoment</p>';
+            }
+
+            // Phases
+            const phases = proj.phases || [];
+            if (phases.length > 0) {
+                document.getElementById('projectDetailsPhases').innerHTML = phases.map(p => `
+                    <div class="flex items-center gap-2 p-2 bg-slate-50 rounded">
+                        <span class="w-3 h-3 rounded" style="background:${p.color}"></span>
+                        <span class="flex-1">${p.name}</span>
+                        <span class="text-sm text-slate-500">${Math.round(p.hours)}h</span>
+                        <span class="text-sm font-bold">${p.days} dag${p.days > 1 ? 'ar' : ''}</span>
+                    </div>`).join('');
+            } else {
+                document.getElementById('projectDetailsPhases').innerHTML = '<p class="text-slate-400">Inga faser</p>';
+            }
+
+            // Financials
+            const totals = proj.totals || {};
+            document.getElementById('projectDetailsLabor').textContent = Math.round(totals.labor || 0).toLocaleString() + ' SEK';
+            document.getElementById('projectDetailsMaterial').textContent = Math.round(totals.material || 0).toLocaleString() + ' SEK';
+            document.getElementById('projectDetailsTotal').textContent = Math.round(totals.final || totals.total || 0).toLocaleString() + ' SEK';
+
+            // View Quote button
+            document.getElementById('projectDetailsViewQuote').onclick = () => {
+                if (proj.quoteId) {
+                    window.location.href = 'quotes.html';
+                }
+            };
+
+            openModal('projectDetailsModal');
+        }
+
+        // ===== TODO LIST =====
+        function renderTodoList() {
+            const list = document.getElementById('todoModalList');
+            list.innerHTML = todos.map((todo, i) => `
+                <li class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100">
+                    <input type="checkbox" ${todo.done ? 'checked' : ''} onchange="toggleTodo(${i})" class="w-5 h-5">
+                    <span class="flex-1 ${todo.done ? 'line-through text-slate-400' : 'text-slate-700'}">${todo.text}</span>
+                    <button onclick="deleteTodo(${i})" class="text-slate-400 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                </li>`).join('');
+        }
+
+        function addTodo() {
+            const input = document.getElementById('newTodoInput');
+            if (input.value.trim()) {
+                todos.push({ text: input.value.trim(), done: false });
+                localStorage.setItem('constructPro_todos', JSON.stringify(todos));
+                input.value = '';
+                renderTodoList();
+                renderDashboard();
+            }
+        }
+
+        function toggleTodo(i) {
+            todos[i].done = !todos[i].done;
+            localStorage.setItem('constructPro_todos', JSON.stringify(todos));
+            renderTodoList();
+            renderDashboard();
+        }
+
+        function deleteTodo(i) {
+            todos.splice(i, 1);
+            localStorage.setItem('constructPro_todos', JSON.stringify(todos));
+            renderTodoList();
+            renderDashboard();
+        }
+
+        // ===== CLOCK =====
+        function updateClock() { document.getElementById('digitalClock').innerText = new Date().toLocaleTimeString('sv-SE'); }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // ===== FULL CALENDAR =====
+        let calCurrentDate = new Date();
+        let calView = 'month'; // 'week' or 'month'
+
+        // Swedish holidays (red days) - calculated for each year
+        function getSwedishHolidays(year) {
+            const holidays = {};
+            // Fixed holidays
+            holidays[`${year}-01-01`] = 'Nyårsdagen';
+            holidays[`${year}-01-06`] = 'Trettondedag jul';
+            holidays[`${year}-05-01`] = 'Första maj';
+            holidays[`${year}-06-06`] = 'Nationaldagen';
+            holidays[`${year}-12-24`] = 'Julafton';
+            holidays[`${year}-12-25`] = 'Juldagen';
+            holidays[`${year}-12-26`] = 'Annandag jul';
+            holidays[`${year}-12-31`] = 'Nyårsafton';
+
+            // Easter-based holidays (calculate Easter)
+            const easter = calculateEaster(year);
+            const easterDate = new Date(year, easter.month, easter.day);
+
+            // Good Friday (Långfredagen) - 2 days before Easter
+            const goodFriday = new Date(easterDate);
+            goodFriday.setDate(goodFriday.getDate() - 2);
+            holidays[formatDateKey(goodFriday)] = 'Långfredagen';
+
+            // Easter Eve (Påskafton)
+            const easterEve = new Date(easterDate);
+            easterEve.setDate(easterEve.getDate() - 1);
+            holidays[formatDateKey(easterEve)] = 'Påskafton';
+
+            // Easter Sunday (Påskdagen)
+            holidays[formatDateKey(easterDate)] = 'Påskdagen';
+
+            // Easter Monday (Annandag påsk)
+            const easterMonday = new Date(easterDate);
+            easterMonday.setDate(easterMonday.getDate() + 1);
+            holidays[formatDateKey(easterMonday)] = 'Annandag påsk';
+
+            // Ascension Day (Kristi himmelsfärdsdag) - 39 days after Easter
+            const ascension = new Date(easterDate);
+            ascension.setDate(ascension.getDate() + 39);
+            holidays[formatDateKey(ascension)] = 'Kristi himmelsfärdsdag';
+
+            // Midsummer Eve (Midsommarafton) - Friday between June 19-25
+            for (let d = 19; d <= 25; d++) {
+                const date = new Date(year, 5, d);
+                if (date.getDay() === 5) { // Friday
+                    holidays[formatDateKey(date)] = 'Midsommarafton';
+                    const midsummerDay = new Date(date);
+                    midsummerDay.setDate(midsummerDay.getDate() + 1);
+                    holidays[formatDateKey(midsummerDay)] = 'Midsommardagen';
+                    break;
+                }
+            }
+
+            // All Saints Day (Alla helgons dag) - Saturday between Oct 31 - Nov 6
+            for (let d = 31; d <= 37; d++) {
+                const date = new Date(year, 9, d > 31 ? d - 31 : d);
+                if (d > 31) date.setMonth(10);
+                if (date.getDay() === 6) { // Saturday
+                    holidays[formatDateKey(date)] = 'Alla helgons dag';
+                    break;
+                }
+            }
+
+            return holidays;
+        }
+
+        function calculateEaster(year) {
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const month = Math.floor((h + l - 7 * m + 114) / 31) - 1;
+            const day = ((h + l - 7 * m + 114) % 31) + 1;
+            return { month, day };
+        }
+
+        function formatDateKey(date) {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+        }
+
+        function calPrevMonth() {
+            if (calView === 'day') {
+                calCurrentDate.setDate(calCurrentDate.getDate() - 1);
+            } else if (calView === 'week') {
+                calCurrentDate.setDate(calCurrentDate.getDate() - 7);
+            } else if (calView === 'year') {
+                calCurrentDate.setFullYear(calCurrentDate.getFullYear() - 1);
+            } else {
+                calCurrentDate.setMonth(calCurrentDate.getMonth() - 1);
+            }
+            renderCalendar();
+        }
+
+        function calNextMonth() {
+            if (calView === 'day') {
+                calCurrentDate.setDate(calCurrentDate.getDate() + 1);
+            } else if (calView === 'week') {
+                calCurrentDate.setDate(calCurrentDate.getDate() + 7);
+            } else if (calView === 'year') {
+                calCurrentDate.setFullYear(calCurrentDate.getFullYear() + 1);
+            } else {
+                calCurrentDate.setMonth(calCurrentDate.getMonth() + 1);
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            calCurrentDate = new Date();
+            renderCalendar();
+        }
+
+        function setCalView(view) {
+            calView = view;
+            // Update all buttons
+            const btnDay = document.getElementById('btnDayView');
+            const btnWeek = document.getElementById('btnWeekView');
+            const btnMonth = document.getElementById('btnMonthView');
+            const btnYear = document.getElementById('btnYearView');
+
+            const activeClasses = ['bg-orange-500', 'text-white', 'shadow-sm'];
+            const inactiveClasses = ['bg-slate-100', 'text-slate-600'];
+
+            [btnDay, btnWeek, btnMonth, btnYear].forEach(btn => {
+                if (!btn) return;
+                btn.classList.remove(...activeClasses, ...inactiveClasses);
+            });
+
+            if (btnDay) btnDay.classList.add(...(view === 'day' ? activeClasses : inactiveClasses));
+            if (btnWeek) btnWeek.classList.add(...(view === 'week' ? activeClasses : inactiveClasses));
+            if (btnMonth) btnMonth.classList.add(...(view === 'month' ? activeClasses : inactiveClasses));
+            if (btnYear) btnYear.classList.add(...(view === 'year' ? activeClasses : inactiveClasses));
+
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const t = translations[currentLang];
+            const calBody = document.getElementById('calBody');
+            const calMonthYear = document.getElementById('calMonthYear');
+            if (!calBody) return;
+
+            const year = calCurrentDate.getFullYear();
+            const month = calCurrentDate.getMonth();
+            const holidays = getSwedishHolidays(year);
+            const today = new Date();
+            const todayKey = formatDateKey(today);
+
+            // Update month/year display
+            if (calMonthYear) {
+                if (calView === 'day') {
+                    const dayName = t.days[(calCurrentDate.getDay() + 6) % 7]; // Adjust for Monday start
+                    calMonthYear.innerHTML = `${calCurrentDate.getDate()} ${t.months[month]} ${year}`;
+                } else if (calView === 'week') {
+                    const weekNum = getWeekNumber(calCurrentDate);
+                    calMonthYear.innerHTML = `v${weekNum} - ${t.months[month]} ${year}`;
+                } else if (calView === 'year') {
+                    calMonthYear.innerHTML = `${year}`;
+                } else {
+                    calMonthYear.innerHTML = `${t.months[month]} ${year}`;
+                }
+            }
+
+            const dayNames = t.days || ['M', 'T', 'O', 'T', 'F', 'L', 'S'];
+
+            if (calView === 'year') {
+                // Year view - show all 12 months in a compact grid
+                let h = `<div class="h-full overflow-y-auto">
+                    <div class="grid grid-cols-4 gap-1 text-center">`;
+
+                for (let m = 0; m < 12; m++) {
+                    const monthFirstDay = new Date(year, m, 1);
+                    const monthLastDay = new Date(year, m + 1, 0);
+                    const isCurrentMonth = m === today.getMonth() && year === today.getFullYear();
+
+                    // Check for projects in this month
+                    const monthProjects = (settings.projects || []).filter(p => {
+                        const pStart = new Date(p.startDate);
+                        const pEnd = new Date(p.endDate);
+                        return pStart <= monthLastDay && pEnd >= monthFirstDay;
+                    });
+
+                    h += `<div class="p-1 rounded ${isCurrentMonth ? 'bg-orange-50 ring-1 ring-orange-300' : 'hover:bg-slate-50'} cursor-pointer" onclick="event.stopPropagation(); calCurrentDate = new Date(${year}, ${m}, 1); setCalView('month');">
+                        <p class="text-[9px] font-bold ${isCurrentMonth ? 'text-orange-600' : 'text-slate-600'} truncate">${t.months[m].substring(0, 3)}</p>
+                        ${monthProjects.length > 0 ? `<div class="flex gap-0.5 justify-center mt-0.5">${monthProjects.slice(0, 3).map(p => `<div class="w-1.5 h-1.5 rounded-full" style="background:${p.color}"></div>`).join('')}</div>` : '<div class="h-2"></div>'}
+                    </div>`;
+                }
+
+                h += `</div></div>`;
+                calBody.innerHTML = h;
+            } else if (calView === 'day') {
+                // Day view - show single day with detailed schedule
+                const dateKey = formatDateKey(calCurrentDate);
+                const isToday = dateKey === todayKey;
+                const isHoliday = holidays[dateKey];
+                const dayProjects = (settings.projects || []).filter(p =>
+                    new Date(p.startDate) <= calCurrentDate && new Date(p.endDate) >= calCurrentDate
+                );
+                const dayOfWeekIdx = (calCurrentDate.getDay() + 6) % 7;
+                const dayName = dayNames[dayOfWeekIdx];
+
+                let h = `<div class="h-full flex flex-col">
+                    <div class="text-center p-4 bg-gradient-to-br ${isToday ? 'from-orange-100 to-orange-50' : 'from-slate-50 to-white'} rounded-lg mb-3">
+                        <p class="text-4xl font-bold ${isToday ? 'text-orange-600' : 'text-slate-700'}">${calCurrentDate.getDate()}</p>
+                        <p class="text-sm ${isToday ? 'text-orange-500' : 'text-slate-500'}">${dayName}</p>
+                        ${isHoliday ? `<p class="text-xs text-red-500 font-medium mt-1"><i class="fas fa-star mr-1"></i>${isHoliday}</p>` : ''}
+                    </div>
+                    <div class="flex-1 overflow-y-auto">
+                        <p class="text-xs font-bold text-slate-500 uppercase mb-2"><i class="fas fa-folder mr-1"></i>${t.planned_projects || 'Projekt'}</p>
+                        ${dayProjects.length > 0 ? dayProjects.map(p => `
+                            <div class="p-2 rounded-lg mb-2 border-l-4" style="border-color:${p.color}; background: ${p.color}15">
+                                <p class="font-medium text-sm text-slate-700">${p.name}</p>
+                                <p class="text-xs text-slate-500">${p.client || ''}</p>
+                            </div>
+                        `).join('') : `<p class="text-sm text-slate-400 text-center py-4"><i class="far fa-calendar-check mr-2"></i>${t.no_projects || 'Inga projekt'}</p>`}
+                    </div>
+                </div>`;
+                calBody.innerHTML = h;
+            } else if (calView === 'week') {
+                // Week view - show one week with more detail
+                const startOfWeek = new Date(calCurrentDate);
+                const dayOfWeek = startOfWeek.getDay() || 7;
+                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + 1);
+                const weekNum = getWeekNumber(startOfWeek);
+
+                let h = `<div class="h-full flex flex-col">
+                    <div class="grid grid-cols-8 gap-1 text-center font-bold text-slate-500 text-xs border-b pb-1 mb-1">
+                        <span class="text-orange-500">v${weekNum}</span>`;
+                for (let i = 0; i < 7; i++) {
+                    const isWeekend = i >= 5;
+                    h += `<span class="${isWeekend ? 'text-red-400' : ''}">${dayNames[i]}</span>`;
+                }
+                h += `</div><div class="grid grid-cols-8 gap-1 flex-1">
+                    <div class="flex items-center justify-center font-bold text-orange-500 text-lg">${weekNum}</div>`;
+
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(startOfWeek.getDate() + i);
+                    const dateKey = formatDateKey(date);
+                    const isToday = dateKey === todayKey;
+                    const isHoliday = holidays[dateKey];
+                    const isWeekend = i >= 5;
+
+                    // Check for projects on this day
+                    const dayProjects = (settings.projects || []).filter(p =>
+                        new Date(p.startDate) <= date && new Date(p.endDate) >= date
+                    );
+
+                    let cls = 'flex flex-col items-center justify-center rounded-lg p-1 ';
+                    if (isToday) cls += 'bg-blue-500 text-white ';
+                    else if (isHoliday) cls += 'bg-red-100 text-red-600 ';
+                    else if (isWeekend) cls += 'bg-slate-50 text-red-400 ';
+                    else cls += 'hover:bg-slate-100 ';
+
+                    // Project dots
+                    const projectDots = dayProjects.length > 0
+                        ? `<div class="flex gap-0.5 mt-0.5">${dayProjects.slice(0, 3).map(p => `<div class="w-2 h-2 rounded-full" style="background:${p.color}"></div>`).join('')}</div>`
+                        : '';
+
+                    h += `<div class="${cls}" title="${isHoliday || (dayProjects.length > 0 ? dayProjects.map(p => p.name).join(', ') : '')}">
+                        <span class="text-lg font-bold">${date.getDate()}</span>
+                        ${isHoliday ? `<span class="text-[8px] leading-none">${isHoliday.substring(0, 8)}</span>` : ''}
+                        ${projectDots}
+                    </div>`;
+                }
+                h += `</div></div>`;
+                calBody.innerHTML = h;
+            } else {
+                // Month view with week numbers
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const startDay = (firstDay.getDay() || 7) - 1; // Monday = 0
+
+                let h = `<div class="h-full flex flex-col">
+                    <div class="grid grid-cols-8 gap-0.5 text-center font-bold text-slate-500 text-[10px] border-b pb-1 mb-1">
+                        <span class="text-orange-500">v</span>`;
+                for (let i = 0; i < 7; i++) {
+                    const isWeekend = i >= 5;
+                    h += `<span class="${isWeekend ? 'text-red-400' : ''}">${dayNames[i]}</span>`;
+                }
+                h += `</div><div class="grid grid-cols-8 gap-0.5 flex-1 auto-rows-fr">`;
+
+                let currentDay = 1;
+                let rowStartDate = new Date(year, month, 1);
+                rowStartDate.setDate(1 - startDay);
+
+                // Calculate how many rows we need
+                const totalDays = startDay + lastDay.getDate();
+                const rows = Math.ceil(totalDays / 7);
+
+                for (let row = 0; row < rows; row++) {
+                    const weekStart = new Date(year, month, 1 + (row * 7) - startDay);
+                    const weekNum = getWeekNumber(weekStart);
+
+                    // Week number column
+                    h += `<div class="flex items-center justify-center text-orange-500 font-bold text-[10px]">${weekNum}</div>`;
+
+                    for (let col = 0; col < 7; col++) {
+                        const dayNum = row * 7 + col - startDay + 1;
+                        const isCurrentMonth = dayNum >= 1 && dayNum <= lastDay.getDate();
+                        const date = new Date(year, month, dayNum);
+                        const dateKey = formatDateKey(date);
+                        const isToday = dateKey === todayKey;
+                        const isHoliday = holidays[dateKey];
+                        const isWeekend = col >= 5;
+
+                        // Check for projects on this day
+                        const dayProjects = (settings.projects || []).filter(p =>
+                            new Date(p.startDate) <= date && new Date(p.endDate) >= date
+                        );
+
+                        let cls = 'flex flex-col items-center justify-center rounded text-xs relative ';
+                        if (!isCurrentMonth) cls += 'text-slate-300 ';
+                        else if (isToday) cls += 'bg-blue-500 text-white font-bold ';
+                        else if (isHoliday) cls += 'bg-red-100 text-red-600 font-bold ';
+                        else if (isWeekend) cls += 'text-red-400 ';
+                        else cls += 'hover:bg-slate-100 ';
+
+                        const displayDay = isCurrentMonth ? dayNum : (dayNum < 1 ? new Date(year, month, dayNum).getDate() : dayNum - lastDay.getDate());
+
+                        // Project dots indicator
+                        const projectDots = isCurrentMonth && dayProjects.length > 0
+                            ? `<div class="flex gap-0.5 mt-0.5">${dayProjects.slice(0, 3).map(p => `<div class="w-1.5 h-1.5 rounded-full" style="background:${p.color}"></div>`).join('')}</div>`
+                            : '';
+
+                        h += `<div class="${cls}" title="${isHoliday || (dayProjects.length > 0 ? dayProjects.map(p => p.name).join(', ') : '')}">${displayDay}${projectDots}</div>`;
+                    }
+                }
+                h += `</div></div>`;
+                calBody.innerHTML = h;
+            }
+        }
+
+        // ===== MODAL CALENDAR WITH PROJECTS =====
+        let modalCalDate = new Date();
+        let modalCalView = 'month';
+
+        function modalCalPrev() {
+            if (modalCalView === 'week') {
+                modalCalDate.setDate(modalCalDate.getDate() - 7);
+            } else {
+                modalCalDate.setMonth(modalCalDate.getMonth() - 1);
+            }
+            renderModalCalendar();
+        }
+
+        function modalCalNext() {
+            if (modalCalView === 'week') {
+                modalCalDate.setDate(modalCalDate.getDate() + 7);
+            } else {
+                modalCalDate.setMonth(modalCalDate.getMonth() + 1);
+            }
+            renderModalCalendar();
+        }
+
+        function modalCalToday() {
+            modalCalDate = new Date();
+            renderModalCalendar();
+        }
+
+        function setModalCalView(view) {
+            modalCalView = view;
+            document.getElementById('modalBtnWeek').classList.toggle('bg-white', view === 'week');
+            document.getElementById('modalBtnWeek').classList.toggle('text-orange-600', view === 'week');
+            document.getElementById('modalBtnMonth').classList.toggle('bg-white', view === 'month');
+            document.getElementById('modalBtnMonth').classList.toggle('text-orange-600', view === 'month');
+            renderModalCalendar();
+        }
+
+        function getProjectsForDate(dateKey) {
+            const projects = settings.projects || [];
+            return projects.filter(p => {
+                if (!p.startDate || !p.endDate) return false;
+                return dateKey >= p.startDate && dateKey <= p.endDate;
+            });
+        }
+
+        function renderModalCalendar() {
+            const t = translations[currentLang];
+            const body = document.getElementById('modalCalBody');
+            const title = document.getElementById('modalCalTitle');
+            if (!body) return;
+
+            const year = modalCalDate.getFullYear();
+            const month = modalCalDate.getMonth();
+            const holidays = getSwedishHolidays(year);
+            const today = new Date();
+            const todayKey = formatDateKey(today);
+
+            // Update title
+            if (title) {
+                if (modalCalView === 'week') {
+                    const weekNum = getWeekNumber(modalCalDate);
+                    title.innerHTML = `Vecka ${weekNum} - ${t.months[month]} ${year}`;
+                } else {
+                    title.innerHTML = `${t.months[month]} ${year}`;
+                }
+            }
+
+            const dayNames = ['Måndag', 'Tisdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lördag', 'Söndag'];
+
+            if (modalCalView === 'week') {
+                // Week view
+                const startOfWeek = new Date(modalCalDate);
+                const dayOfWeek = startOfWeek.getDay() || 7;
+                startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek + 1);
+                const weekNum = getWeekNumber(startOfWeek);
+
+                let h = `<div class="h-full flex flex-col">
+                    <div class="grid grid-cols-8 gap-2 mb-2 text-center font-bold text-slate-600 border-b pb-2">
+                        <div class="text-orange-500">v${weekNum}</div>`;
+                for (let i = 0; i < 7; i++) {
+                    const isWeekend = i >= 5;
+                    h += `<div class="${isWeekend ? 'text-red-400' : ''}">${dayNames[i]}</div>`;
+                }
+                h += `</div><div class="grid grid-cols-8 gap-2 flex-1">
+                    <div class="flex items-center justify-center font-bold text-orange-500 text-3xl">${weekNum}</div>`;
+
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(startOfWeek);
+                    date.setDate(startOfWeek.getDate() + i);
+                    const dateKey = formatDateKey(date);
+                    const isToday = dateKey === todayKey;
+                    const isHoliday = holidays[dateKey];
+                    const isWeekend = i >= 5;
+                    const dayProjects = getProjectsForDate(dateKey);
+
+                    let cellBg = '';
+                    if (dayProjects.length > 0) {
+                        cellBg = `background: linear-gradient(180deg, ${dayProjects.map((p, idx) => p.color + '40').join(', ')});`;
+                    }
+
+                    let cls = 'flex flex-col rounded-xl p-3 border relative min-h-[120px] ';
+                    if (isToday) cls += 'border-blue-500 border-2 bg-blue-50 ';
+                    else if (isHoliday) cls += 'border-red-300 bg-red-50 ';
+                    else if (isWeekend) cls += 'border-slate-200 bg-slate-50 ';
+                    else cls += 'border-slate-200 hover:border-orange-300 ';
+
+                    h += `<div class="${cls}" style="${cellBg}">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-2xl font-bold ${isToday ? 'text-blue-600' : isHoliday ? 'text-red-600' : isWeekend ? 'text-red-400' : 'text-slate-700'}">${date.getDate()}</span>
+                            ${isHoliday ? `<span class="text-xs text-red-500 font-medium">${isHoliday}</span>` : ''}
+                        </div>
+                        <div class="flex-1 space-y-1 overflow-auto">
+                            ${dayProjects.map(p => `<div class="text-xs px-2 py-1 rounded" style="background:${p.color}40; border-left: 3px solid ${p.color}">${p.name}</div>`).join('')}
+                        </div>
+                    </div>`;
+                }
+                h += `</div></div>`;
+                body.innerHTML = h;
+            } else {
+                // Month view
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                const startDay = (firstDay.getDay() || 7) - 1;
+
+                let h = `<div class="h-full flex flex-col">
+                    <div class="grid grid-cols-8 gap-1 mb-2 text-center font-bold text-slate-600 text-sm border-b pb-2">
+                        <div class="text-orange-500">v</div>`;
+                for (let i = 0; i < 7; i++) {
+                    const isWeekend = i >= 5;
+                    h += `<div class="${isWeekend ? 'text-red-400' : ''}">${dayNames[i]}</div>`;
+                }
+                h += `</div><div class="grid grid-cols-8 gap-1 flex-1 auto-rows-fr">`;
+
+                const totalDays = startDay + lastDay.getDate();
+                const rows = Math.ceil(totalDays / 7);
+
+                for (let row = 0; row < rows; row++) {
+                    const weekStart = new Date(year, month, 1 + (row * 7) - startDay);
+                    const weekNum = getWeekNumber(weekStart);
+
+                    h += `<div class="flex items-center justify-center text-orange-500 font-bold text-sm">${weekNum}</div>`;
+
+                    for (let col = 0; col < 7; col++) {
+                        const dayNum = row * 7 + col - startDay + 1;
+                        const isCurrentMonth = dayNum >= 1 && dayNum <= lastDay.getDate();
+                        const date = new Date(year, month, dayNum);
+                        const dateKey = formatDateKey(date);
+                        const isToday = dateKey === todayKey;
+                        const isHoliday = isCurrentMonth ? holidays[dateKey] : null;
+                        const isWeekend = col >= 5;
+                        const dayProjects = isCurrentMonth ? getProjectsForDate(dateKey) : [];
+
+                        let cellBg = '';
+                        if (dayProjects.length > 0) {
+                            cellBg = `background: linear-gradient(135deg, ${dayProjects.map(p => p.color + '30').join(', ')});`;
+                        }
+
+                        let cls = 'flex flex-col rounded-lg p-1 border relative overflow-hidden ';
+                        if (!isCurrentMonth) cls += 'opacity-30 border-transparent ';
+                        else if (isToday) cls += 'border-blue-500 border-2 ';
+                        else if (isHoliday) cls += 'border-red-200 ';
+                        else cls += 'border-slate-100 hover:border-orange-300 ';
+
+                        const displayDay = isCurrentMonth ? dayNum : new Date(year, month, dayNum).getDate();
+
+                        h += `<div class="${cls}" style="${cellBg}" title="${isHoliday || ''}">
+                            <div class="flex justify-between items-start">
+                                <span class="text-sm font-bold ${isToday ? 'text-blue-600' : isHoliday ? 'text-red-600' : isWeekend ? 'text-red-400' : 'text-slate-700'}">${displayDay}</span>
+                                ${isHoliday ? `<span class="text-[8px] text-red-500 truncate ml-1">${isHoliday.substring(0, 6)}</span>` : ''}
+                            </div>
+                            <div class="flex-1 mt-1 space-y-0.5 overflow-hidden">
+                                ${dayProjects.slice(0, 2).map(p => `<div class="text-[9px] px-1 rounded truncate" style="background:${p.color}50; color:${p.color}">${p.name}</div>`).join('')}
+                                ${dayProjects.length > 2 ? `<div class="text-[9px] text-slate-400">+${dayProjects.length - 2} mer</div>` : ''}
+                            </div>
+                        </div>`;
+                    }
+                }
+                h += `</div></div>`;
+                body.innerHTML = h;
+            }
+        }
+
+        // Hook into openModal removed - logic moved to main function
+
+        // ===== TIMER LOGIC =====
+        let timerInterval = null;
+        let timerStartTime = null;
+        let timerMode = 'work'; // 'work' or 'transport'
+        let timerRunning = false;
+        let timerProject = ''; // Selected project for current session
+
+        function loadTimerState() {
+            const state = JSON.parse(localStorage.getItem('constructPro_timerState') || '{}');
+            timerProject = state.project || '';
+            if (state.running) {
+                timerStartTime = new Date(state.startTime);
+                timerMode = state.mode || 'work';
+                timerRunning = true;
+                startTimerInterval();
+            } else {
+                timerMode = state.mode || 'work';
+                timerRunning = false;
+            }
+            updateTimerUI();
+            // Update project dropdown if exists
+            const projSel = document.getElementById('timerProjectSelect');
+            if (projSel) projSel.value = timerProject;
+        }
+
+        function setTimerMode(mode) {
+            if (timerRunning) {
+                const t = translations[currentLang];
+                showToast(t.stop + ' ' + t.time_report, 'error');
+                return;
+            }
+            timerMode = mode;
+            saveTimerState();
+            // Re-render dashboard to update the project/car dropdowns based on new mode
+            renderDashboard();
+        }
+
+        function setTimerProject(projectName) {
+            if (timerRunning) {
+                showToast('Stoppa timern först', 'error');
+                return;
+            }
+            timerProject = projectName;
+            saveTimerState();
+        }
+
+        function setTimerCar(carId) {
+            if (timerRunning) {
+                showToast('Stoppa timern först', 'error');
+                return;
+            }
+            localStorage.setItem('constructPro_timerCar', carId);
+            // Also re-render dashboard to update UI
+            renderDashboard();
+        }
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            const status = document.getElementById('timerStatus');
+
+            if (!timerRunning) {
+                // START
+                timerStartTime = new Date();
+                timerRunning = true;
+                startTimerInterval();
+
+                // If transport mode, mark car as in use
+                if (timerMode === 'transport') {
+                    const timerCar = localStorage.getItem('constructPro_timerCar');
+                    if (timerCar) {
+                        const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                        const carIndex = cars.findIndex(c => c.id === timerCar);
+                        if (carIndex >= 0) {
+                            cars[carIndex].inUse = true;
+                            cars[carIndex].currentDriver = localStorage.getItem('constructPro_loggedInUser') || 'Unknown';
+                            localStorage.setItem('constructPro_cars', JSON.stringify(cars));
+                        }
+                    }
+                }
+
+                // UI updates
+                btn.innerHTML = `<i class="fas fa-stop"></i> STOPP`;
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600', 'shadow-green-500/30');
+                btn.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
+
+                status.innerText = timerMode === 'work' ? 'Arbete pågår...' : 'Resa pågår...';
+                showToast(timerMode === 'work' ? 'Arbete startat' : 'Resa startad');
+            } else {
+                // STOP - Open Modal instead of prompt
+                openStopModal();
+            }
+            saveTimerState();
+            renderDashboard(); // Update other cards like Team Status
+        }
+
+        // ===== MODAL LOGIC FOR TIMER =====
+        let selectedCar = null;
+
+        function openStopModal() {
+            const now = new Date();
+            // Adjust timezone for input value
+            const localIso = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('stopTimeInput').value = localIso;
+            document.getElementById('stopDescription').value = '';
+
+            // Load Employees
+            const employees = JSON.parse(localStorage.getItem('constructPro_employees') || '[]');
+            const empSel = document.getElementById('stopEmployeeSelect');
+            empSel.innerHTML = '<option value="">Välj anställd...</option>' +
+                employees.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            // Auto-select logged-in user from settings, or first employee
+            const loggedInUser = localStorage.getItem('constructPro_loggedInUser');
+            if (loggedInUser && employees.find(e => e.id === loggedInUser)) {
+                empSel.value = loggedInUser;
+            } else if (employees.length > 0) {
+                empSel.value = employees[0].id;
+                // Save as logged-in user for future
+                localStorage.setItem('constructPro_loggedInUser', employees[0].id);
+            }
+
+            // Load Projects
+            const settings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+            const projSel = document.getElementById('stopProjectSelect');
+            projSel.innerHTML = '<option value="">Allmänt / Inget</option>' +
+                (settings.projects || []).map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+            // Pre-select project from timer state
+            if (timerProject) projSel.value = timerProject;
+
+            if (timerMode === 'transport') {
+                document.getElementById('transportFields').classList.remove('hidden');
+                document.getElementById('workFields').classList.add('hidden');
+
+                // Load Cars
+                const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                const carSel = document.getElementById('stopCarSelect');
+                carSel.innerHTML = '<option value="">Välj bil...</option>' +
+                    cars.map(c => `<option value="${c.id}">${c.reg} (${c.model})</option>`).join('');
+
+                // Auto-select car that was selected at timer start
+                const timerCar = localStorage.getItem('constructPro_timerCar');
+                if (timerCar && cars.find(c => c.id === timerCar)) {
+                    carSel.value = timerCar;
+                    updateOdometerHint(); // Show current odometer for this car
+                }
+
+                document.getElementById('stopOdometerInput').value = '';
+            } else {
+                document.getElementById('transportFields').classList.add('hidden');
+                document.getElementById('workFields').classList.remove('hidden');
+            }
+
+            document.getElementById('stopTimerModal').classList.add('active');
+        }
+
+        function updateOdometerHint() {
+            const carId = document.getElementById('stopCarSelect').value;
+            const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+            const car = cars.find(c => c.id === carId);
+            if (car) {
+                document.getElementById('odometerHint').innerText = `Nuvarande: ${car.km} km`;
+                document.getElementById('stopOdometerInput').min = car.km;
+                selectedCar = car;
+            } else {
+                document.getElementById('odometerHint').innerText = '';
+                selectedCar = null;
+            }
+        }
+
+        function confirmStopTimer() {
+            try {
+                const stopTimeVal = document.getElementById('stopTimeInput').value;
+                if (!stopTimeVal) { alert('Ange sluttid'); return; }
+                const endTime = new Date(stopTimeVal);
+                const desc = document.getElementById('stopDescription').value;
+                const empId = document.getElementById('stopEmployeeSelect').value;
+
+                if (timerMode === 'transport') {
+                    const carId = document.getElementById('stopCarSelect').value;
+                    const newOdo = parseInt(document.getElementById('stopOdometerInput').value) || 0;
+                    const manualKm = parseFloat(document.getElementById('stopManualKmInput').value) || 0;
+
+                    if (!carId && newOdo) { alert('Välj bil om du anger mätarställning'); return; }
+
+                    let km = 0;
+                    let carReg = '';
+
+                    // Priority: Use odometer if both car and new odometer are provided
+                    if (carId && newOdo) {
+                        const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                        const carIndex = cars.findIndex(c => c.id === carId);
+                        if (carIndex >= 0) {
+                            const oldKm = cars[carIndex].km || 0;
+                            if (newOdo < oldKm) {
+                                alert(`Ny mätarställning kan inte vara lägre än ${oldKm}`);
+                                return;
+                            }
+                            km = newOdo - oldKm;
+                            carReg = cars[carIndex].reg || carId;
+
+                            // Update car odometer
+                            cars[carIndex].km = newOdo;
+
+                            // Add trip to car's tripLog
+                            if (!cars[carIndex].tripLog) cars[carIndex].tripLog = [];
+                            cars[carIndex].tripLog.push({
+                                date: timerStartTime.toISOString().split('T')[0],
+                                start: timerStartTime.toISOString(),
+                                end: endTime.toISOString(),
+                                km: km,
+                                startKm: oldKm,
+                                endKm: newOdo,
+                                driver: empId || '',
+                                desc: desc || 'Körning'
+                            });
+
+                            // Mark car as no longer in use
+                            cars[carIndex].inUse = false;
+                            cars[carIndex].currentDriver = null;
+
+                            localStorage.setItem('constructPro_cars', JSON.stringify(cars));
+                        }
+                    } else if (manualKm > 0) {
+                        // Use manually entered km
+                        km = manualKm;
+
+                        // If car was selected, still log to car's tripLog
+                        if (carId) {
+                            const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                            const carIndex = cars.findIndex(c => c.id === carId);
+                            if (carIndex >= 0) {
+                                carReg = cars[carIndex].reg || carId;
+                                if (!cars[carIndex].tripLog) cars[carIndex].tripLog = [];
+                                cars[carIndex].tripLog.push({
+                                    date: timerStartTime.toISOString().split('T')[0],
+                                    start: timerStartTime.toISOString(),
+                                    end: endTime.toISOString(),
+                                    km: km,
+                                    startKm: cars[carIndex].km || 0,
+                                    endKm: (cars[carIndex].km || 0) + km,
+                                    driver: empId || '',
+                                    desc: desc || 'Körning'
+                                });
+                                // Update odometer with manual km
+                                cars[carIndex].km = (cars[carIndex].km || 0) + km;
+                                cars[carIndex].inUse = false;
+                                cars[carIndex].currentDriver = null;
+                                localStorage.setItem('constructPro_cars', JSON.stringify(cars));
+                            }
+                        }
+                    }
+
+                    if (km > 0) saveTrip(timerStartTime, endTime, km, carId, desc);
+                    showToast(`${km} km loggat`, 'success');
+                }
+
+                // Save basic session
+                const project = document.getElementById('stopProjectSelect').value;
+                saveSession(timerStartTime, endTime, timerMode, desc, project);
+
+                // Remember logged-in employee for next time
+                if (empId) {
+                    localStorage.setItem('constructPro_loggedInUser', empId);
+                }
+
+                // Update Employee Log
+                if (empId) {
+                    const employees = JSON.parse(localStorage.getItem('constructPro_employees') || '[]');
+                    const empIndex = employees.findIndex(e => e.id === empId);
+                    if (empIndex >= 0) {
+                        const emp = employees[empIndex];
+                        if (!emp.workLog) emp.workLog = [];
+                        // Calculate hours
+                        const hours = Math.round(((endTime - timerStartTime) / (1000 * 60 * 60)) * 100) / 100;
+                        const dateKey = timerStartTime.toISOString().split('T')[0];
+
+                        // Get km if transport mode
+                        const carId = timerMode === 'transport' ? document.getElementById('stopCarSelect').value : null;
+                        const newOdo = timerMode === 'transport' ? parseInt(document.getElementById('stopOdometerInput').value) || 0 : 0;
+                        const cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                        const car = carId ? cars.find(c => c.id === carId) : null;
+                        const tripKm = car && car.tripLog && car.tripLog.length > 0 ? car.tripLog[car.tripLog.length - 1].km : 0;
+
+                        emp.workLog.push({
+                            date: dateKey,
+                            hours: hours,
+                            project: timerMode === 'transport' ? 'Transport' : (project || 'Arbete'),
+                            desc: desc || (timerMode === 'transport' ? 'Körning' : 'Arbetspass'),
+                            km: timerMode === 'transport' ? tripKm : 0,
+                            carId: timerMode === 'transport' ? carId : null
+                        });
+                        localStorage.setItem('constructPro_employees', JSON.stringify(employees));
+                    }
+                }
+
+                // Reset Timer
+                clearInterval(timerInterval);
+                timerRunning = false;
+                timerStartTime = null;
+                document.getElementById('workTimer').innerText = '00:00:00';
+
+                // UI updates
+                const btn = document.getElementById('timerBtn');
+                btn.innerHTML = `<i class="fas fa-play"></i> START`;
+                btn.classList.remove('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600', 'shadow-green-500/30');
+
+                const t = translations[currentLang] || translations['sv'];
+                document.getElementById('timerStatus').innerText = timerMode === 'work' ? (t.ready_work || 'Redo för arbete') : (t.ready_transport || 'Redo för resa');
+
+                closeModal('stopTimerModal');
+                saveTimerState();
+                renderDashboard();
+            } catch (e) {
+                console.error("Stop Timer Error:", e);
+                alert("Ett fel uppstod: " + e.message);
+                closeModal('stopTimerModal');
+            }
+        }
+
+        function openEditStartModal() {
+            if (!timerRunning) return;
+            const localIso = new Date(timerStartTime.getTime() - (timerStartTime.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('newStartTimeInput').value = localIso;
+            // Center the modal or just show it
+            document.getElementById('editStartModal').classList.add('active');
+        }
+
+        function saveNewStartTime() {
+            const val = document.getElementById('newStartTimeInput').value;
+            if (val) {
+                timerStartTime = new Date(val);
+                saveTimerState();
+                closeModal('editStartModal');
+                // Force update immediately
+                const now = new Date();
+                const diff = now - timerStartTime;
+                const h = Math.floor(diff / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+                document.getElementById('workTimer').innerText =
+                    `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+        }
+
+        function startTimerInterval() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                const now = new Date();
+                const diff = now - timerStartTime;
+
+                const h = Math.floor(diff / (1000 * 60 * 60));
+                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const s = Math.floor((diff % (1000 * 60)) / 1000);
+
+                const display = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                const timerEl = document.getElementById('workTimer');
+                if (timerEl) timerEl.innerText = display;
+            }, 1000);
+
+            // Immediate update UI for running state
+            const btn = document.getElementById('timerBtn');
+            if (btn) {
+                btn.innerHTML = `<i class="fas fa-stop"></i> STOPP`;
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600', 'shadow-green-500/30');
+                btn.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
+            }
+        }
+
+        function updateTimerUI() {
+            setTimerMode(timerMode);
+            if (timerRunning) {
+                const btn = document.getElementById('timerBtn');
+                if (btn) {
+                    btn.innerHTML = `<i class="fas fa-stop"></i> STOPP`;
+                    btn.classList.remove('bg-green-500', 'hover:bg-green-600', 'shadow-green-500/30');
+                    btn.classList.add('bg-red-500', 'hover:bg-red-600', 'shadow-red-500/30');
+                }
+            }
+        }
+
+        function saveTimerState() {
+            const state = {
+                running: timerRunning,
+                startTime: timerStartTime,
+                mode: timerMode,
+                project: timerProject
+            };
+            localStorage.setItem('constructPro_timerState', JSON.stringify(state));
+        }
+
+        function saveSession(start, end, type, desc, project) {
+            const sessions = JSON.parse(localStorage.getItem('constructPro_workSessions') || '[]');
+            sessions.push({
+                type,
+                start: start.toISOString(),
+                end: end.toISOString(),
+                duration: (end - start), // ms
+                desc: desc || '',
+                project: project || ''
+            });
+            localStorage.setItem('constructPro_workSessions', JSON.stringify(sessions));
+        }
+
+        function saveTrip(start, end, km, carId, desc) {
+            const trips = JSON.parse(localStorage.getItem('constructPro_carTrips') || '[]');
+            trips.push({
+                date: start.toISOString(),
+                start: start.toISOString(),
+                end: end.toISOString(),
+                km: parseFloat(km),
+                carId: carId || '',
+                desc: desc || ''
+            });
+            localStorage.setItem('constructPro_carTrips', JSON.stringify(trips));
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-y-10 z-50 font-bold flex items-center gap-2 ${type === 'error' ? 'bg-red-500' : 'bg-green-500'}`;
+            toast.innerHTML = `<i class="fas ${type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
+            document.body.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => toast.classList.remove('translate-y-10'));
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
+        }
+
+        function closeModal(id) {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        }
+
+        // ===== WEATHER API =====
+        let weatherData = null;
+        let weatherLocation = { lat: null, lon: null, name: 'Laddar...' };
+        let geoLocation = { lat: null, lon: null, name: '' }; // Original geolocation
+        let tempLocationTimeout = null;
+        let weatherSearchTimeout = null;
+
+        const weatherIcons = {
+            0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+            45: '🌫️', 48: '🌫️',
+            51: '🌦️', 53: '🌦️', 55: '🌧️',
+            61: '🌧️', 63: '🌧️', 65: '🌧️',
+            71: '🌨️', 73: '🌨️', 75: '❄️',
+            77: '🌨️', 80: '🌧️', 81: '🌧️', 82: '🌧️',
+            85: '🌨️', 86: '🌨️', 95: '⛈️', 96: '⛈️', 99: '⛈️'
+        };
+
+        const dayNames = { sv: ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'], en: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], ro: ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm'] };
+
+        function initWeather() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        geoLocation = { lat: pos.coords.latitude, lon: pos.coords.longitude, name: '' };
+                        weatherLocation = { ...geoLocation };
+                        fetchWeather(geoLocation.lat, geoLocation.lon);
+                    },
+                    err => {
+                        console.warn('Geolocation denied, using default Stockholm');
+                        geoLocation = { lat: 59.33, lon: 18.07, name: 'Stockholm' };
+                        weatherLocation = { ...geoLocation };
+                        fetchWeather(geoLocation.lat, geoLocation.lon);
+                    }
+                );
+            } else {
+                geoLocation = { lat: 59.33, lon: 18.07, name: 'Stockholm' };
+                weatherLocation = { ...geoLocation };
+                fetchWeather(geoLocation.lat, geoLocation.lon);
+            }
+        }
+
+        async function fetchWeather(lat, lon) {
+            try {
+                // Reverse geocode to get city name
+                if (!weatherLocation.name || weatherLocation.name === 'Laddar...') {
+                    const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=&latitude=${lat}&longitude=${lon}&count=1`);
+                    // Open-Meteo doesn't support reverse geocoding directly, so we use a workaround
+                    // For now, just use coordinates or try nominatim
+                    try {
+                        const nomRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                        const nomData = await nomRes.json();
+                        weatherLocation.name = nomData.address?.city || nomData.address?.town || nomData.address?.village || nomData.display_name?.split(',')[0] || 'Din plats';
+                        if (!geoLocation.name) geoLocation.name = weatherLocation.name;
+                    } catch (e) {
+                        weatherLocation.name = 'Din plats';
+                    }
+                }
+
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto`;
+                const res = await fetch(url);
+                weatherData = await res.json();
+                updateWeatherUI();
+            } catch (e) {
+                console.error('Weather fetch error:', e);
+            }
+        }
+
+        function updateWeatherUI() {
+            if (!weatherData) return;
+            const current = weatherData.current;
+            const daily = weatherData.daily;
+
+            // Update card content (will be re-rendered by renderDashboard, but also update live)
+            const cardTemp = document.querySelector('#card-weather .card-content p');
+            if (cardTemp) {
+                // Direct update won't work due to card structure, rely on next renderDashboard
+            }
+
+            // Update modal
+            document.getElementById('weatherLocationName').innerText = weatherLocation.name;
+            document.getElementById('weatherCurrentTemp').innerText = `${Math.round(current.temperature_2m)}°C`;
+            document.getElementById('weatherCurrentIcon').innerText = weatherIcons[current.weather_code] || '🌡️';
+            document.getElementById('weatherCurrentDesc').innerText = getWeatherDesc(current.weather_code);
+
+            // 7-day forecast
+            const forecastEl = document.getElementById('weatherForecast');
+            const lang = currentLang || 'sv';
+            const days = dayNames[lang] || dayNames.sv;
+            forecastEl.innerHTML = daily.time.slice(0, 7).map((date, i) => {
+                const d = new Date(date);
+                const dayName = i === 0 ? (translations[lang]?.today || 'Idag') : days[d.getDay()];
+                const icon = weatherIcons[daily.weather_code[i]] || '🌡️';
+                const maxT = Math.round(daily.temperature_2m_max[i]);
+                const minT = Math.round(daily.temperature_2m_min[i]);
+                return `<div class="bg-slate-50 p-2 rounded-lg">
+                    <p class="font-bold text-xs text-slate-600">${dayName}</p>
+                    <p class="text-xl my-1">${icon}</p>
+                    <p class="text-xs"><span class="text-red-500">${maxT}°</span> <span class="text-blue-500">${minT}°</span></p>
+                </div>`;
+            }).join('');
+
+            // Re-render dashboard to update card
+            renderDashboard();
+        }
+
+        function getWeatherDesc(code) {
+            const descs = { 0: 'Klart', 1: 'Mestadels klart', 2: 'Delvis molnigt', 3: 'Molnigt', 45: 'Dimma', 48: 'Rimfrost', 51: 'Lätt duggregn', 53: 'Duggregn', 55: 'Kraftigt duggregn', 61: 'Lätt regn', 63: 'Regn', 65: 'Kraftigt regn', 71: 'Lätt snö', 73: 'Snö', 75: 'Kraftigt snöfall', 77: 'Snökorn', 80: 'Regnskurar', 81: 'Måttliga regnskurar', 82: 'Kraftiga regnskurar', 85: 'Snöbyar', 86: 'Kraftiga snöbyar', 95: 'Åska', 96: 'Åska med hagel', 99: 'Kraftig åska' };
+            return descs[code] || 'Okänt';
+        }
+
+        async function searchWeatherLocation(query) {
+            clearTimeout(weatherSearchTimeout);
+            const resultsEl = document.getElementById('weatherSearchResults');
+            if (query.length < 2) {
+                resultsEl.classList.add('hidden');
+                return;
+            }
+            weatherSearchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=${currentLang}`);
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0) {
+                        resultsEl.innerHTML = data.results.map(r => `
+                            <div class="p-2 hover:bg-slate-100 cursor-pointer text-sm text-left" onclick="selectWeatherLocation(${r.latitude}, ${r.longitude}, '${r.name}, ${r.country || ''}')">
+                                <i class="fas fa-map-marker-alt text-slate-400 mr-2"></i>${r.name}, ${r.admin1 || ''}, ${r.country || ''}
+                            </div>
+                        `).join('');
+                        resultsEl.classList.remove('hidden');
+                    } else {
+                        resultsEl.innerHTML = '<div class="p-2 text-sm text-slate-400">Inga resultat</div>';
+                        resultsEl.classList.remove('hidden');
+                    }
+                } catch (e) {
+                    console.error('Search error:', e);
+                }
+            }, 300);
+        }
+
+        function selectWeatherLocation(lat, lon, name) {
+            document.getElementById('weatherSearchResults').classList.add('hidden');
+            document.getElementById('weatherSearchInput').value = '';
+            weatherLocation = { lat, lon, name };
+            fetchWeather(lat, lon);
+
+            // Show temp indicator
+            document.getElementById('tempLocationIndicator').classList.remove('hidden');
+
+            // Reset to geo location after 1 minute
+            clearTimeout(tempLocationTimeout);
+            tempLocationTimeout = setTimeout(() => {
+                weatherLocation = { ...geoLocation };
+                fetchWeather(geoLocation.lat, geoLocation.lon);
+                document.getElementById('tempLocationIndicator').classList.add('hidden');
+            }, 60000);
+        }
+
+        function resetWeatherToGeo() {
+            clearTimeout(tempLocationTimeout);
+            weatherLocation = { ...geoLocation };
+            fetchWeather(geoLocation.lat, geoLocation.lon);
+            document.getElementById('tempLocationIndicator').classList.add('hidden');
+        }
+
+        // ===== INIT =====
+        document.getElementById('langSelect').value = currentLang;
+        loadSettings();
+        setLanguage(currentLang);
+        setTimeout(() => {
+            renderCalendar();
+            loadTimerState();
+            initWeather();
+        }, 100);
+    </script>
+</body>
+
+</html>

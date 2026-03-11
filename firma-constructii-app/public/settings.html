@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Inställningar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f1f5f9;
+        }
+
+        .tab-btn.active {
+            background-color: #f97316;
+            color: white;
+        }
+
+        .tab-btn:not(.active) {
+            background-color: white;
+            color: #64748b;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+        }
+
+        .input-sm {
+            padding: 6px 10px;
+            font-size: 12px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+            color: white;
+        }
+
+        .category-section {
+            border-left: 4px solid;
+            margin-bottom: 16px;
+        }
+
+        .work-item {
+            display: grid;
+            grid-template-columns: 1fr 80px 80px 80px 40px;
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 12px;
+        }
+
+        .currency-label {
+            font-size: 9px;
+            color: #94a3b8;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-100 min-h-screen">
+
+    <!-- Navbar -->
+    <nav
+        class="bg-white border-b border-slate-200 px-4 py-2 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="text-slate-400 hover:text-orange-600 p-2"><i class="fas fa-arrow-left"></i></a>
+            <div class="bg-orange-600 text-white p-2 rounded-lg"><i class="fas fa-cog"></i></div>
+            <div>
+                <h1 class="font-bold text-sm" data-i18n="settings">INSTÄLLNINGAR</h1>
+                <p class="text-[10px] text-slate-500" data-i18n="app_config">Appkonfiguration</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <select id="langSelect" onchange="setLanguage(this.value)" class="border text-sm rounded px-2 py-1">
+                <option value="ro">🇷🇴 RO</option>
+                <option value="sv" selected>🇸🇪 SV</option>
+                <option value="en">🇬🇧 EN</option>
+            </select>
+            <button onclick="saveAllSettings()" class="btn-primary"><i class="fas fa-save mr-1"></i> <span
+                    data-i18n="save_all">Spara Allt</span></button>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4">
+        <!-- Tabs -->
+        <div class="flex gap-1 mb-4 flex-wrap text-xs">
+            <button onclick="switchTab('company')" id="tab-company"
+                class="tab-btn px-3 py-2 rounded font-bold flex items-center gap-1"><i class="fas fa-building"></i>
+                Företag</button>
+            <button onclick="switchTab('work')" id="tab-work"
+                class="tab-btn active px-3 py-2 rounded font-bold flex items-center gap-1"><i class="fas fa-hammer"></i>
+                Arbeten</button>
+            <button onclick="switchTab('materials')" id="tab-materials"
+                class="tab-btn px-3 py-2 rounded font-bold flex items-center gap-1"><i class="fas fa-boxes-stacked"></i>
+                Material</button>
+            <button onclick="switchTab('costs')" id="tab-costs"
+                class="tab-btn px-3 py-2 rounded font-bold flex items-center gap-1"><i class="fas fa-calculator"></i>
+                Kostnader</button>
+            <button onclick="switchTab('dashboard')" id="tab-dashboard"
+                class="tab-btn px-3 py-2 rounded font-bold flex items-center gap-1"><i class="fas fa-th-large"></i>
+                Dashboard</button>
+        </div>
+
+        <!-- TAB: Company -->
+        <div id="panel-company" class="hidden">
+            <div class="card p-4 mb-4">
+                <h2 class="font-bold text-slate-700 mb-3"><i
+                        class="fas fa-id-card text-orange-500 mr-2"></i>Företagsinformation</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    <div><label class="text-xs text-slate-500">Företagsnamn</label><input type="text" id="compName"
+                            class="input-field"></div>
+                    <div><label class="text-xs text-slate-500">Slogan</label><input type="text" id="compSlogan"
+                            class="input-field"></div>
+                    <div><label class="text-xs text-slate-500">Telefon</label><input type="text" id="compPhone"
+                            class="input-field"></div>
+                    <div><label class="text-xs text-slate-500">E-post</label><input type="text" id="compEmail"
+                            class="input-field"></div>
+                    <div><label class="text-xs text-slate-500">Adress</label><input type="text" id="compAddress"
+                            class="input-field"></div>
+                    <div><label class="text-xs text-slate-500">Stad</label><input type="text" id="compCity"
+                            class="input-field"></div>
+                </div>
+            </div>
+            <div class="card p-4">
+                <h2 class="font-bold text-slate-700 mb-3"><i class="fas fa-image text-blue-500 mr-2"></i>Logotyp</h2>
+                <div class="flex gap-4 items-center">
+                    <div id="logoDropzone" onclick="document.getElementById('logoInput').click()"
+                        class="w-24 h-24 border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer hover:border-orange-400">
+                        <input type="file" id="logoInput" accept="image/*" class="hidden"
+                            onchange="handleLogoUpload(event)">
+                        <img id="logoPreview" class="max-w-full max-h-full hidden">
+                        <i id="logoPlaceholder" class="fas fa-cloud-upload-alt text-2xl text-slate-300"></i>
+                    </div>
+                    <button onclick="removeLogo()" id="btnRemoveLogo" class="hidden btn-danger"><i
+                            class="fas fa-trash"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Work Categories -->
+        <div id="panel-work" class="space-y-4">
+            <!-- Category headers -->
+            <div class="text-xs text-slate-500 grid grid-cols-5 gap-2 px-3"
+                style="grid-template-columns: 1fr 80px 80px 80px 40px;">
+                <span>Arbetsnamn</span>
+                <span class="text-center">SEK</span>
+                <span class="text-center">EUR</span>
+                <span class="text-center">RON</span>
+                <span></span>
+            </div>
+
+            <!-- 2. Demolition -->
+            <div class="card category-section border-l-red-500">
+                <div class="p-3 bg-red-50 font-bold text-red-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('demolition')">
+                    <span><i class="fas fa-hammer mr-2"></i>2. Rivning</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('demolition')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-demolition" class="p-3"></div>
+            </div>
+
+            <!-- 3. Preparation -->
+            <div class="card category-section border-l-orange-500">
+                <div class="p-3 bg-orange-50 font-bold text-orange-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('preparation')">
+                    <span><i class="fas fa-tools mr-2"></i>3. Förarbete</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('preparation')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-preparation" class="p-3"></div>
+            </div>
+
+            <!-- 4. Waterproofing -->
+            <div class="card category-section border-l-blue-500">
+                <div class="p-3 bg-blue-50 font-bold text-blue-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('waterproofing')">
+                    <span><i class="fas fa-droplet mr-2"></i>4. Tätskikt</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('waterproofing')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-waterproofing" class="p-3"></div>
+            </div>
+
+            <!-- 5. Ceiling/Painting -->
+            <div class="card category-section border-l-purple-500">
+                <div class="p-3 bg-purple-50 font-bold text-purple-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('ceiling')">
+                    <span><i class="fas fa-paint-roller mr-2"></i>5. Tak/Målning</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('ceiling')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-ceiling" class="p-3"></div>
+            </div>
+
+            <!-- 6. Fixture Installation -->
+            <div class="card category-section border-l-green-500">
+                <div class="p-3 bg-green-50 font-bold text-green-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('fixtures')">
+                    <span><i class="fas fa-sink mr-2"></i>6. Montage</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('fixtures')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-fixtures" class="p-3"></div>
+            </div>
+
+            <!-- 7. Plumbing -->
+            <div class="card category-section border-l-cyan-500">
+                <div class="p-3 bg-cyan-50 font-bold text-cyan-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('plumbing')">
+                    <span><i class="fas fa-faucet mr-2"></i>7. VVS</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('plumbing')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-plumbing" class="p-3"></div>
+            </div>
+
+            <!-- 8. Electrical -->
+            <div class="card category-section border-l-yellow-500">
+                <div class="p-3 bg-yellow-50 font-bold text-yellow-700 text-sm flex justify-between items-center cursor-pointer"
+                    onclick="toggleCat('electrical')">
+                    <span><i class="fas fa-bolt mr-2"></i>8. El</span>
+                    <button onclick="event.stopPropagation(); addWorkItem('electrical')" class="btn-secondary"><i
+                            class="fas fa-plus"></i></button>
+                </div>
+                <div id="cat-electrical" class="p-3"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Materials -->
+        <div id="panel-materials" class="hidden">
+            <div class="card p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="font-bold text-slate-700"><i
+                            class="fas fa-boxes-stacked text-purple-500 mr-2"></i>Material</h2>
+                    <button onclick="addMaterial()" class="btn-primary text-xs"><i class="fas fa-plus"></i> Lägg
+                        till</button>
+                </div>
+                <div class="text-xs text-slate-500 grid gap-2 px-2 mb-2"
+                    style="grid-template-columns: 1fr 80px 80px 80px 120px 40px;">
+                    <span>Materialnamn</span><span class="text-center">SEK</span><span
+                        class="text-center">EUR</span><span class="text-center">RON</span><span
+                        class="text-center">Formel</span><span></span>
+                </div>
+                <div id="materialsList" class="max-h-96 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <!-- TAB: Costs (Overhead, ROT, Tax, Transport, Disposal) -->
+        <div id="panel-costs" class="hidden space-y-4">
+            <!-- Overhead Costs (Omkostnader) -->
+            <div class="card p-4 border-l-4 border-l-slate-700">
+                <h2 class="font-bold text-slate-800 mb-2"><i class="fas fa-percentage mr-2"></i>Omkostnader (Overhead)
+                </h2>
+                <p class="text-xs text-slate-500 mb-3">Svenska byggbranschens standardpåslag för arbetslön och
+                    UE-kostnader (2011).</p>
+
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <label class="text-xs text-slate-500 block mb-1">Påslag på arbetslön (%)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="laborOverhead" class="input-field text-lg font-bold text-center"
+                                value="252">
+                            <span class="text-lg font-bold text-slate-600">%</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">71% direkta + 181% indirekta</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg">
+                        <label class="text-xs text-slate-500 block mb-1">Påslag på UE-kostnad (%)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="subcontractorOverhead"
+                                class="input-field text-lg font-bold text-center" value="6">
+                            <span class="text-lg font-bold text-slate-600">%</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">Administration, risk, vinst</p>
+                    </div>
+                </div>
+
+                <!-- Formula explanation -->
+                <div class="bg-gradient-to-r from-slate-100 to-slate-50 p-3 rounded-lg text-xs">
+                    <div class="font-bold text-slate-700 mb-1"><i class="fas fa-calculator mr-1"></i>Formel:</div>
+                    <code
+                        class="bg-white px-2 py-1 rounded">Total = Arbetslön × <span id="laborMultiplier">3.52</span> + UE × <span id="ueMultiplier">1.06</span></code>
+                    <div class="mt-2 text-slate-500">
+                        <strong>Exempel:</strong> Arbetslön 100,000 × 3.52 = <span
+                            class="text-green-600 font-bold">352,000 SEK</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROT Avdrag -->
+            <div class="card p-4 border-l-4 border-l-green-500">
+                <h2 class="font-bold text-green-700 mb-3"><i class="fas fa-percent mr-2"></i>ROT-avdrag</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div><label class="text-xs text-slate-500">ROT %</label><input type="number" id="rotPercent"
+                            class="input-field" value="30"></div>
+                    <div><label class="text-xs text-slate-500">Max per person/år (SEK)</label><input type="number"
+                            id="rotMaxSEK" class="input-field" value="50000"></div>
+                    <div><label class="text-xs text-slate-500">Max per person/år (EUR)</label><input type="number"
+                            id="rotMaxEUR" class="input-field" value="4500"></div>
+                    <div><label class="text-xs text-slate-500">Max per person/år (RON)</label><input type="number"
+                            id="rotMaxRON" class="input-field" value="22500"></div>
+                </div>
+                <p class="text-xs text-slate-400 mt-2"><i class="fas fa-info-circle"></i> ROT-avdrag tillämpas endast på
+                    arbetskostnad (ej material)</p>
+            </div>
+
+            <!-- Tax/VAT -->
+            <div class="card p-4 border-l-4 border-l-blue-500">
+                <h2 class="font-bold text-blue-700 mb-3"><i class="fas fa-receipt mr-2"></i>Moms</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs text-slate-500">Moms %</label><input type="number" id="vatPercent"
+                            class="input-field" value="25"></div>
+                    <div><label class="text-xs text-slate-500">Reducerad moms %</label><input type="number"
+                            id="vatReduced" class="input-field" value="12"></div>
+                </div>
+            </div>
+
+            <!-- Transport -->
+            <div class="card p-4 border-l-4 border-l-orange-500">
+                <h2 class="font-bold text-orange-700 mb-3"><i class="fas fa-truck mr-2"></i>Transport</h2>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><label class="text-xs text-slate-500">Per km (SEK)</label><input type="number"
+                            id="transportPerKm" class="input-field" value="15"></div>
+                    <div><label class="text-xs text-slate-500">Minimum (SEK)</label><input type="number"
+                            id="transportMin" class="input-field" value="500"></div>
+                    <div><label class="text-xs text-slate-500">Avstånd till lager (km)</label><input type="number"
+                            id="transportDefaultKm" class="input-field" value="20"></div>
+                </div>
+            </div>
+
+            <!-- Disposal -->
+            <div class="card p-4 border-l-4 border-l-red-500">
+                <h2 class="font-bold text-red-700 mb-3"><i class="fas fa-dumpster mr-2"></i>Avfallshantering</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <div><label class="text-xs text-slate-500">Container pris (SEK)</label><input type="number"
+                            id="disposalContainer" class="input-field" value="2500"></div>
+                    <div><label class="text-xs text-slate-500">Per m³ (SEK)</label><input type="number"
+                            id="disposalPerM3" class="input-field" value="500"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Dashboard -->
+        <div id="panel-dashboard" class="hidden">
+            <div class="card p-4">
+                <h2 class="font-bold text-slate-700 mb-3"><i
+                        class="fas fa-th-large text-indigo-500 mr-2"></i>Dashboard-kort</h2>
+                <p class="text-sm text-slate-500 mb-4">Dra i hörnet på korten för att ändra storlek direkt på dashboard.
+                </p>
+                <div id="activeCardsList" class="space-y-2"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div id="toast"
+        class="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all text-sm">
+        <i class="fas fa-check-circle mr-1"></i><span id="toastMessage">Sparat!</span>
+    </div>
+
+    <script>
+        // Default work items by category
+        const defaultWorkItems = {
+            demolition: [
+                { name: 'Spegel rivning', priceSEK: 200, priceEUR: 18, priceRON: 90 },
+                { name: 'Duschvägg rivning', priceSEK: 500, priceEUR: 45, priceRON: 225 },
+                { name: 'Skåp rivning', priceSEK: 400, priceEUR: 36, priceRON: 180 },
+                { name: 'Hylla rivning', priceSEK: 150, priceEUR: 14, priceRON: 68 },
+                { name: 'Inbyggd handfat rivning', priceSEK: 350, priceEUR: 32, priceRON: 158 },
+                { name: 'Tvättställ rivning', priceSEK: 300, priceEUR: 27, priceRON: 135 },
+                { name: 'Duschblandare med duschstång', priceSEK: 400, priceEUR: 36, priceRON: 180 },
+                { name: 'Plastmatta vägg rivning', priceSEK: 150, priceEUR: 14, priceRON: 68, perM2: true },
+                { name: 'Plastmatta golv rivning', priceSEK: 150, priceEUR: 14, priceRON: 68, perM2: true },
+                { name: 'Kakel/klinker + bruk vägg rivning', priceSEK: 200, priceEUR: 18, priceRON: 90, perM2: true },
+                { name: 'Kakel/klinker + bruk golv rivning', priceSEK: 200, priceEUR: 18, priceRON: 90, perM2: true },
+                { name: 'Tätskikt rivning', priceSEK: 100, priceEUR: 9, priceRON: 45, perM2: true },
+                { name: '22 not och fjäder rivning', priceSEK: 150, priceEUR: 14, priceRON: 68, perM2: true }
+            ],
+            preparation: [
+                { name: 'Förarbete', priceSEK: 1500, priceEUR: 135, priceRON: 675 },
+                { name: '11 OSB spånskiva (B=900)', priceSEK: 350, priceEUR: 32, priceRON: 158, perM2: true },
+                { name: '13 gipsskiva (B=900)', priceSEK: 280, priceEUR: 25, priceRON: 126, perM2: true },
+                { name: '22 spånskiva', priceSEK: 380, priceEUR: 34, priceRON: 171, perM2: true },
+                { name: 'Avjämning befintliga golvbjälkar', priceSEK: 2500, priceEUR: 225, priceRON: 1125 },
+                { name: 'Flytspackla m. armering', priceSEK: 450, priceEUR: 40, priceRON: 203, perM2: true },
+                { name: 'Nytt golvbrunn', priceSEK: 3500, priceEUR: 315, priceRON: 1575 }
+            ],
+            waterproofing: [
+                { name: 'Tätskikt', priceSEK: 350, priceEUR: 32, priceRON: 158, perM2: true },
+                { name: 'Tätskikt golv', priceSEK: 400, priceEUR: 36, priceRON: 180, perM2: true },
+                { name: 'Tätskikt väggar', priceSEK: 350, priceEUR: 32, priceRON: 158, perM2: true },
+                { name: 'Avvikelser (B*H badrum)', priceSEK: 250, priceEUR: 23, priceRON: 113 }
+            ],
+            ceiling: [
+                { name: 'Nytt gipstak, målat', priceSEK: 450, priceEUR: 40, priceRON: 203, perM2: true },
+                { name: 'Dimbar spotlight', priceSEK: 800, priceEUR: 72, priceRON: 360 },
+                { name: 'Takpanel', priceSEK: 350, priceEUR: 32, priceRON: 158, perM2: true },
+                { name: 'Mineralfibertak i regelverk', priceSEK: 500, priceEUR: 45, priceRON: 225, perM2: true }
+            ],
+            fixtures: [
+                { name: 'Ny duschvägg hörn', priceSEK: 2500, priceEUR: 225, priceRON: 1125 },
+                { name: 'Hylla/spegel LED-belysning', priceSEK: 1200, priceEUR: 108, priceRON: 540 },
+                { name: 'Bänkskiva m. urtag L=600', priceSEK: 1800, priceEUR: 162, priceRON: 810 },
+                { name: 'Inbyggt handfat', priceSEK: 1500, priceEUR: 135, priceRON: 675 },
+                { name: 'Ny fläkt', priceSEK: 2000, priceEUR: 180, priceRON: 900 },
+                { name: 'Ny dörr inkl. karm', priceSEK: 4500, priceEUR: 405, priceRON: 2025 },
+                { name: 'Nytt fönster', priceSEK: 5000, priceEUR: 450, priceRON: 2250 },
+                { name: 'Ny WC toalett', priceSEK: 3500, priceEUR: 315, priceRON: 1575 }
+            ],
+            plumbing: [
+                { name: 'Ny handdukstork/vatten', priceSEK: 3500, priceEUR: 315, priceRON: 1575 },
+                { name: 'Vägghängd WC', priceSEK: 4500, priceEUR: 405, priceRON: 2025 },
+                { name: 'Nya rör', priceSEK: 8000, priceEUR: 720, priceRON: 3600 },
+                { name: 'Golvvärme vatten', priceSEK: 650, priceEUR: 59, priceRON: 293, perM2: true },
+                { name: 'Duschblandare installation', priceSEK: 1500, priceEUR: 135, priceRON: 675 },
+                { name: 'Tvättställsblandare installation', priceSEK: 1000, priceEUR: 90, priceRON: 450 }
+            ],
+            electrical: [
+                { name: 'Ny handdukstork/el', priceSEK: 2500, priceEUR: 225, priceRON: 1125 },
+                { name: 'Ny fläkt el', priceSEK: 1500, priceEUR: 135, priceRON: 675 },
+                { name: 'Golvvärme el', priceSEK: 500, priceEUR: 45, priceRON: 225, perM2: true }
+            ]
+        };
+
+        const defaultMaterials = [
+            { name: 'Kakel vägg', priceSEK: 450, priceEUR: 40, priceRON: 200, formula: 'price * m2', unit: 'm²' },
+            { name: 'Klinker golv', priceSEK: 550, priceEUR: 50, priceRON: 250, formula: 'price * m2', unit: 'm²' },
+            { name: 'Fog', priceSEK: 80, priceEUR: 7, priceRON: 36, formula: 'price * m2', unit: 'm²' },
+            { name: 'Fix/lim', priceSEK: 120, priceEUR: 11, priceRON: 54, formula: 'price * m2', unit: 'm²' },
+            { name: 'Tätskiktsmaterial', priceSEK: 200, priceEUR: 18, priceRON: 90, formula: 'price * m2', unit: 'm²' }
+        ];
+
+        let settings = {};
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+
+        function loadSettings() {
+            const saved = localStorage.getItem('constructPro_settings');
+            if (saved) {
+                try { settings = JSON.parse(saved); } catch (e) { settings = {}; }
+            }
+            // Initialize defaults
+            if (!settings.company) settings.company = {};
+            if (!settings.workItems) settings.workItems = JSON.parse(JSON.stringify(defaultWorkItems));
+            if (!settings.materials) settings.materials = JSON.parse(JSON.stringify(defaultMaterials));
+            if (!settings.costs) settings.costs = {
+                laborOverhead: 252, subcontractorOverhead: 6,  // Swedish construction overhead
+                rotPercent: 30, rotMaxSEK: 50000, rotMaxEUR: 4500, rotMaxRON: 22500,
+                vatPercent: 25, vatReduced: 12,
+                transportPerKm: 15, transportMin: 500, transportDefaultKm: 20,
+                disposalContainer: 2500, disposalPerM3: 500
+            };
+            // Ensure overhead exists for older settings
+            if (!settings.costs.laborOverhead) settings.costs.laborOverhead = 252;
+            if (!settings.costs.subcontractorOverhead) settings.costs.subcontractorOverhead = 6;
+            if (!settings.dashboardCards) settings.dashboardCards = [
+                { id: 'calendar', w: 300, h: 200 }, { id: 'projects', w: 300, h: 180 },
+                { id: 'timer', w: 400, h: 200 }, { id: 'quote', w: 200, h: 100 }
+            ];
+            populateAll();
+        }
+
+        function populateAll() {
+            // Company
+            document.getElementById('compName').value = settings.company.name || '';
+            document.getElementById('compSlogan').value = settings.company.slogan || '';
+            document.getElementById('compPhone').value = settings.company.phone || '';
+            document.getElementById('compEmail').value = settings.company.email || '';
+            document.getElementById('compAddress').value = settings.company.address || '';
+            document.getElementById('compCity').value = settings.company.city || '';
+            if (settings.company.logo) showLogoPreview(settings.company.logo);
+
+            // Costs - Overhead
+            document.getElementById('laborOverhead').value = settings.costs.laborOverhead;
+            document.getElementById('subcontractorOverhead').value = settings.costs.subcontractorOverhead;
+            updateOverheadFormula();
+
+            // Costs - Other
+            document.getElementById('rotPercent').value = settings.costs.rotPercent;
+            document.getElementById('rotMaxSEK').value = settings.costs.rotMaxSEK;
+            document.getElementById('rotMaxEUR').value = settings.costs.rotMaxEUR;
+            document.getElementById('rotMaxRON').value = settings.costs.rotMaxRON;
+            document.getElementById('vatPercent').value = settings.costs.vatPercent;
+            document.getElementById('vatReduced').value = settings.costs.vatReduced;
+            document.getElementById('transportPerKm').value = settings.costs.transportPerKm;
+            document.getElementById('transportMin').value = settings.costs.transportMin;
+            document.getElementById('transportDefaultKm').value = settings.costs.transportDefaultKm;
+            document.getElementById('disposalContainer').value = settings.costs.disposalContainer;
+            document.getElementById('disposalPerM3').value = settings.costs.disposalPerM3;
+
+            renderWorkItems();
+            renderMaterials();
+            renderDashboardCards();
+        }
+
+        function renderWorkItems() {
+            const categories = ['demolition', 'preparation', 'waterproofing', 'ceiling', 'fixtures', 'plumbing', 'electrical'];
+            categories.forEach(cat => {
+                const container = document.getElementById('cat-' + cat);
+                if (!container) return;
+                const items = settings.workItems[cat] || [];
+                container.innerHTML = items.map((item, i) => `
+                    <div class="work-item">
+                        <input type="text" value="${item.name}" onchange="updateWorkItem('${cat}', ${i}, 'name', this.value)" class="input-field input-sm">
+                        <input type="number" value="${item.priceSEK}" onchange="updateWorkItem('${cat}', ${i}, 'priceSEK', this.value)" class="input-field input-sm text-right">
+                        <input type="number" value="${item.priceEUR}" onchange="updateWorkItem('${cat}', ${i}, 'priceEUR', this.value)" class="input-field input-sm text-right">
+                        <input type="number" value="${item.priceRON}" onchange="updateWorkItem('${cat}', ${i}, 'priceRON', this.value)" class="input-field input-sm text-right">
+                        <button onclick="deleteWorkItem('${cat}', ${i})" class="btn-danger"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
+            });
+        }
+
+        function updateWorkItem(cat, index, field, value) {
+            if (field.startsWith('price')) settings.workItems[cat][index][field] = parseFloat(value) || 0;
+            else settings.workItems[cat][index][field] = value;
+        }
+
+        function addWorkItem(cat) {
+            if (!settings.workItems[cat]) settings.workItems[cat] = [];
+            settings.workItems[cat].push({ name: 'Ny post', priceSEK: 0, priceEUR: 0, priceRON: 0 });
+            renderWorkItems();
+        }
+
+        function deleteWorkItem(cat, index) {
+            settings.workItems[cat].splice(index, 1);
+            renderWorkItems();
+        }
+
+        function toggleCat(cat) {
+            const el = document.getElementById('cat-' + cat);
+            if (el) el.classList.toggle('hidden');
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materialsList');
+            container.innerHTML = settings.materials.map((mat, i) => `
+                <div class="work-item" style="grid-template-columns: 1fr 80px 80px 80px 120px 40px;">
+                    <input type="text" value="${mat.name}" onchange="updateMaterial(${i}, 'name', this.value)" class="input-field input-sm">
+                    <input type="number" value="${mat.priceSEK}" onchange="updateMaterial(${i}, 'priceSEK', this.value)" class="input-field input-sm text-right">
+                    <input type="number" value="${mat.priceEUR}" onchange="updateMaterial(${i}, 'priceEUR', this.value)" class="input-field input-sm text-right">
+                    <input type="number" value="${mat.priceRON}" onchange="updateMaterial(${i}, 'priceRON', this.value)" class="input-field input-sm text-right">
+                    <input type="text" value="${mat.formula || ''}" onchange="updateMaterial(${i}, 'formula', this.value)" class="input-field input-sm font-mono text-xs" placeholder="price * qty">
+                    <button onclick="deleteMaterial(${i})" class="btn-danger"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
+        }
+
+        function updateMaterial(index, field, value) {
+            if (field.startsWith('price')) settings.materials[index][field] = parseFloat(value) || 0;
+            else settings.materials[index][field] = value;
+        }
+
+        function addMaterial() {
+            settings.materials.push({ name: 'Nytt material', priceSEK: 0, priceEUR: 0, priceRON: 0, formula: 'price * qty', unit: 'st' });
+            renderMaterials();
+        }
+
+        function deleteMaterial(index) {
+            settings.materials.splice(index, 1);
+            renderMaterials();
+        }
+
+        function renderDashboardCards() {
+            const container = document.getElementById('activeCardsList');
+            const names = { calendar: 'Kalender', projects: 'Projekt', timer: 'Tidrapport', todo: 'Att göra', quote: 'Ny offert' };
+            container.innerHTML = settings.dashboardCards.map((card, i) => `
+                <div class="flex items-center justify-between p-2 bg-slate-50 rounded border text-sm">
+                    <span><i class="fas fa-grip-vertical text-slate-300 mr-2"></i>${names[card.id] || card.id}</span>
+                    <span class="text-xs text-slate-400">${card.w}×${card.h}px</span>
+                </div>
+            `).join('');
+        }
+
+        // Tab switching
+        function switchTab(tab) {
+            ['company', 'work', 'materials', 'costs', 'dashboard'].forEach(t => {
+                document.getElementById('tab-' + t)?.classList.toggle('active', t === tab);
+                document.getElementById('panel-' + t)?.classList.toggle('hidden', t !== tab);
+            });
+        }
+
+        // Logo
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (file && file.size < 2 * 1024 * 1024) {
+                const reader = new FileReader();
+                reader.onload = e => { settings.company.logo = e.target.result; showLogoPreview(e.target.result); };
+                reader.readAsDataURL(file);
+            }
+        }
+        function showLogoPreview(src) {
+            document.getElementById('logoPreview').src = src;
+            document.getElementById('logoPreview').classList.remove('hidden');
+            document.getElementById('logoPlaceholder').classList.add('hidden');
+            document.getElementById('btnRemoveLogo').classList.remove('hidden');
+        }
+        function removeLogo() {
+            settings.company.logo = null;
+            document.getElementById('logoPreview').classList.add('hidden');
+            document.getElementById('logoPlaceholder').classList.remove('hidden');
+            document.getElementById('btnRemoveLogo').classList.add('hidden');
+        }
+
+        // Save
+        function saveAllSettings() {
+            settings.company = {
+                name: document.getElementById('compName').value,
+                slogan: document.getElementById('compSlogan').value,
+                phone: document.getElementById('compPhone').value,
+                email: document.getElementById('compEmail').value,
+                address: document.getElementById('compAddress').value,
+                city: document.getElementById('compCity').value,
+                logo: settings.company?.logo
+            };
+            settings.costs = {
+                laborOverhead: parseFloat(document.getElementById('laborOverhead').value) || 252,
+                subcontractorOverhead: parseFloat(document.getElementById('subcontractorOverhead').value) || 6,
+                rotPercent: parseFloat(document.getElementById('rotPercent').value) || 30,
+                rotMaxSEK: parseFloat(document.getElementById('rotMaxSEK').value) || 50000,
+                rotMaxEUR: parseFloat(document.getElementById('rotMaxEUR').value) || 4500,
+                rotMaxRON: parseFloat(document.getElementById('rotMaxRON').value) || 22500,
+                vatPercent: parseFloat(document.getElementById('vatPercent').value) || 25,
+                vatReduced: parseFloat(document.getElementById('vatReduced').value) || 12,
+                transportPerKm: parseFloat(document.getElementById('transportPerKm').value) || 15,
+                transportMin: parseFloat(document.getElementById('transportMin').value) || 500,
+                transportDefaultKm: parseFloat(document.getElementById('transportDefaultKm').value) || 20,
+                disposalContainer: parseFloat(document.getElementById('disposalContainer').value) || 2500,
+                disposalPerM3: parseFloat(document.getElementById('disposalPerM3').value) || 500
+            };
+            localStorage.setItem('constructPro_settings', JSON.stringify(settings));
+            showToast('Sparat!');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 2000);
+        }
+
+        // Update overhead formula display
+        function updateOverheadFormula() {
+            const laborOH = parseFloat(document.getElementById('laborOverhead').value) || 252;
+            const ueOH = parseFloat(document.getElementById('subcontractorOverhead').value) || 6;
+            const laborMult = (1 + laborOH / 100).toFixed(2);
+            const ueMult = (1 + ueOH / 100).toFixed(2);
+            document.getElementById('laborMultiplier').textContent = laborMult;
+            document.getElementById('ueMultiplier').textContent = ueMult;
+        }
+
+        // Attach listeners to overhead inputs
+        document.getElementById('laborOverhead')?.addEventListener('input', updateOverheadFormula);
+        document.getElementById('subcontractorOverhead')?.addEventListener('input', updateOverheadFormula);
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('constructPro_lang', lang);
+        }
+
+        // Init
+        loadSettings();
+        switchTab('work');
+    </script>
+</body>
+
+</html>

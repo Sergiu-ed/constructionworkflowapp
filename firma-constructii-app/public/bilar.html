@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="sv">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construct Pro - Bilar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .input-field {
+            padding: 10px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 14px;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+        }
+
+        .car-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+
+        .car-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="bg-white border-b px-4 py-2 flex justify-between items-center sticky top-0 z-50 shadow-sm">
+        <div class="flex items-center gap-2">
+            <a href="index.html" class="text-slate-400 hover:text-orange-600 p-2"><i class="fas fa-arrow-left"></i></a>
+            <div id="navLogo">
+                <div class="bg-orange-600 text-white p-2 rounded-lg"><i class="fas fa-car-side"></i></div>
+            </div>
+            <div>
+                <h1 id="navCompName" class="font-bold text-sm">CONSTRUCT PRO</h1>
+                <p class="text-[10px] text-slate-500" data-i18n="vehicles">Fordonspark</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <a href="anstallda.html" class="text-slate-500 hover:text-slate-700 px-3 py-2 text-sm"><i
+                    class="fas fa-hard-hat mr-1"></i><span data-i18n="staff">Personal</span></a>
+            <button onclick="openAddModal()"
+                class="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-orange-600">
+                <i class="fas fa-plus mr-1"></i><span data-i18n="new_car">Ny Bil</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Stats -->
+    <div class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-4 rounded-xl">
+                <p class="text-blue-100 text-xs" data-i18n="cars_count">Antal bilar</p>
+                <p id="statTotal" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white p-4 rounded-xl">
+                <p class="text-green-100 text-xs" data-i18n="km_month">Km denna månad</p>
+                <p id="statKm" class="text-2xl font-bold">0 km</p>
+            </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white p-4 rounded-xl">
+                <p class="text-purple-100 text-xs" data-i18n="trips_month">Resor denna månad</p>
+                <p id="statTrips" class="text-2xl font-bold">0</p>
+            </div>
+            <div class="bg-gradient-to-br from-orange-500 to-orange-600 text-white p-4 rounded-xl">
+                <p class="text-orange-100 text-xs" data-i18n="service_needed">Service behövs</p>
+                <p id="statService" class="text-2xl font-bold">0</p>
+            </div>
+        </div>
+
+        <!-- Car List -->
+        <div id="carList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16">
+            <i class="fas fa-car text-6xl text-slate-300 mb-4"></i>
+            <h3 class="text-xl font-bold text-slate-600 mb-2" data-i18n="no_cars">Inga bilar registrerade</h3>
+            <p class="text-slate-400 mb-4" data-i18n="add_first">Lägg till ditt första fordon</p>
+            <button onclick="openAddModal()" class="bg-orange-500 text-white px-6 py-3 rounded-lg font-bold">
+                <i class="fas fa-plus mr-2"></i><span data-i18n="add_car">Lägg till bil</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="carModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div
+                class="bg-gradient-to-r from-orange-500 to-orange-600 text-white p-4 flex justify-between items-center">
+                <h2 id="modalTitle" class="font-bold text-lg"><i class="fas fa-car mr-2"></i>Ny Bil</h2>
+                <button onclick="closeModal()" class="text-xl hover:opacity-70"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="carId">
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Registreringsnummer *</label>
+                    <input type="text" id="carReg" class="input-field uppercase font-mono" placeholder="ABC 123">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Modell</label>
+                        <input type="text" id="carModel" class="input-field" placeholder="Volvo V60">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Årsmodell</label>
+                        <input type="number" id="carYear" class="input-field" placeholder="2022">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Mätarställning (km)</label>
+                        <input type="number" id="carKm" class="input-field" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="text-sm text-slate-600 font-medium">Förare</label>
+                        <select id="carDriver" class="input-field">
+                            <option value="">Ingen specifik</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="text-sm text-slate-600 font-medium">Status</label>
+                    <select id="carStatus" class="input-field">
+                        <option value="active">I drift</option>
+                        <option value="service">På service</option>
+                        <option value="broken">Trasig</option>
+                    </select>
+                </div>
+            </div>
+            <div class="border-t p-4 flex gap-3 justify-end bg-slate-50">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-slate-600 hover:bg-slate-200 rounded-lg font-medium">Avbryt</button>
+                <button onclick="saveCar()"
+                    class="px-6 py-2 bg-orange-500 text-white rounded-lg font-bold hover:bg-orange-600">
+                    <i class="fas fa-save mr-1"></i>Spara
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Car Detail/History Modal -->
+    <div id="detailModal" class="modal">
+        <div class="bg-white rounded-xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div class="bg-gradient-to-r from-slate-700 to-slate-800 text-white p-4 flex justify-between items-center">
+                <h2 id="detailTitle" class="font-bold text-lg"><i class="fas fa-car mr-2"></i>Bilhistorik</h2>
+                <button onclick="closeDetailModal()" class="text-xl hover:opacity-70"><i
+                        class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-50 p-3 rounded-lg text-center">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Mätarställning</p>
+                        <p id="detailKm" class="text-xl font-bold text-slate-700">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg text-center">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Resor i år</p>
+                        <p id="detailTrips" class="text-xl font-bold text-slate-700">-</p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg text-center">
+                        <p class="text-xs text-slate-500 uppercase font-bold">Totalt körd</p>
+                        <p id="detailTotal" class="text-xl font-bold text-slate-700">-</p>
+                    </div>
+                </div>
+                <h3 class="font-bold text-slate-700 mb-2">Körjournal (Senaste 10)</h3>
+                <div id="tripList" class="space-y-2 max-h-[400px] overflow-y-auto">
+                    <!-- Trips rendered here -->
+                </div>
+                <div class="mt-4 pt-4 border-t flex justify-end">
+                    <button onclick="printReport()"
+                        class="flex items-center gap-2 text-slate-600 hover:text-slate-800 font-medium">
+                        <i class="fas fa-print"></i> Skriv ut rapport
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cars = [];
+        let employees = [];
+        let trips = [];
+        let currentLang = localStorage.getItem('constructPro_lang') || 'sv';
+
+        // Translations for this page
+        const translations = {
+            sv: { vehicles: 'Fordonspark', cars_count: 'Antal bilar', km_month: 'Km denna månad', trips_month: 'Resor denna månad', service_needed: 'Service behövs', new_car: 'Ny Bil', staff: 'Personal', no_driver: 'Ingen specifik', in_operation: 'I drift', on_service: 'På service', broken: 'Trasig', no_cars: 'Inga bilar registrerade', add_first: 'Lägg till ditt första fordon', add_car: 'Lägg till bil', reg_num: 'Registreringsnummer', model: 'Modell', year: 'Årsmodell', odometer: 'Mätarställning (km)', driver: 'Förare', status: 'Status', cancel: 'Avbryt', save: 'Spara', edit_car: 'Redigera Bil', history: 'Historik', odometer_reading: 'Mätarställning', trips_year: 'Resor i år', total_driven: 'Totalt körd', trip_log: 'Körjournal (Senaste 10)', no_trips: 'Inga loggade resor för detta fordon', print_report: 'Skriv ut rapport' },
+            en: { vehicles: 'Vehicle Fleet', cars_count: 'Number of cars', km_month: 'Km this month', trips_month: 'Trips this month', service_needed: 'Service needed', new_car: 'New Car', staff: 'Staff', no_driver: 'No driver assigned', in_operation: 'In operation', on_service: 'In service', broken: 'Broken', no_cars: 'No cars registered', add_first: 'Add your first vehicle', add_car: 'Add car', reg_num: 'Registration number', model: 'Model', year: 'Year', odometer: 'Odometer (km)', driver: 'Driver', status: 'Status', cancel: 'Cancel', save: 'Save', edit_car: 'Edit Car', history: 'History', odometer_reading: 'Odometer', trips_year: 'Trips this year', total_driven: 'Total driven', trip_log: 'Trip log (Last 10)', no_trips: 'No trips logged for this vehicle', print_report: 'Print report' },
+            ro: { vehicles: 'Parc Auto', cars_count: 'Număr mașini', km_month: 'Km luna aceasta', trips_month: 'Călătorii luna aceasta', service_needed: 'Necesită service', new_car: 'Mașină Nouă', staff: 'Personal', no_driver: 'Niciun șofer', in_operation: 'În funcțiune', on_service: 'La service', broken: 'Defectă', no_cars: 'Nu sunt mașini înregistrate', add_first: 'Adaugă primul vehicul', add_car: 'Adaugă mașină', reg_num: 'Număr înregistrare', model: 'Model', year: 'An', odometer: 'Kilometraj (km)', driver: 'Șofer', status: 'Status', cancel: 'Anulează', save: 'Salvează', edit_car: 'Editează Mașină', history: 'Istoric', odometer_reading: 'Kilometraj', trips_year: 'Călătorii anul acesta', total_driven: 'Total parcurs', trip_log: 'Jurnal curse (Ultimele 10)', no_trips: 'Nu există curse pentru acest vehicul', print_report: 'Tipărește raport' }
+        };
+        const t = translations[currentLang] || translations.sv;
+
+        function loadData() {
+            try {
+                cars = JSON.parse(localStorage.getItem('constructPro_cars') || '[]');
+                employees = JSON.parse(localStorage.getItem('constructPro_employees') || '[]');
+                const settings = JSON.parse(localStorage.getItem('constructPro_settings') || '{}');
+                if (settings.company?.name) document.getElementById('navCompName').innerText = settings.company.name;
+                if (settings.company?.logo) document.getElementById('navLogo').innerHTML = `<img src="${settings.company.logo}" class="h-10 object-contain">`;
+
+                // Load global trips
+                trips = JSON.parse(localStorage.getItem('constructPro_carTrips') || '[]');
+            } catch (e) { }
+
+            // Populate driver select
+            const sel = document.getElementById('carDriver');
+            sel.innerHTML = '<option value="">Ingen specifik</option>' +
+                employees.map(e => `<option value="${e.name}">${e.name}</option>`).join('');
+
+            renderCars();
+            updateStats();
+        }
+
+        function renderCars() {
+            const list = document.getElementById('carList');
+            const empty = document.getElementById('emptyState');
+
+            if (cars.length === 0) {
+                list.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            empty.classList.add('hidden');
+
+            list.innerHTML = cars.map(c => {
+                // Calculate trips for this car if assigned
+                // Currently trips are global from timer, let's assume simple assignment for now or manual log
+                // For this version, let's show the car card
+
+                let statusColor = 'bg-green-100 text-green-600';
+                if (c.status === 'service') statusColor = 'bg-orange-100 text-orange-600';
+                if (c.status === 'broken') statusColor = 'bg-red-100 text-red-600';
+
+                return `
+                <div class="car-card cursor-pointer group" onclick="showDetail('${c.id}')">
+                    <div class="h-2 bg-gradient-to-r from-orange-500 to-orange-400"></div>
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-mono font-bold text-2xl text-slate-800 tracking-wider">${c.reg}</h3>
+                                <p class="text-sm text-slate-500">${c.model} ${c.year}</p>
+                            </div>
+                            <span class="badge ${statusColor}">
+                                ${c.status === 'active' ? 'I drift' : c.status === 'service' ? 'Service' : 'Trasig'}
+                            </span>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 text-sm text-slate-600 mb-4">
+                            <div class="bg-slate-100 p-2 rounded flex items-center gap-2">
+                                <i class="fas fa-tachometer-alt text-slate-400"></i>
+                                <span class="font-bold">${c.km} km</span>
+                            </div>
+                            ${c.driver ? `
+                            <div class="bg-blue-50 text-blue-700 p-2 rounded flex items-center gap-2 px-3">
+                                <i class="fas fa-user text-blue-400"></i>
+                                <span>${c.driver}</span>
+                            </div>` : ''}
+                        </div>
+                        
+                        <div class="flex justify-end pt-2 border-t border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="event.stopPropagation(); editCar('${c.id}')" class="text-blue-500 hover:text-blue-700 px-2 py-1"><i class="fas fa-edit"></i></button>
+                            <button onclick="event.stopPropagation(); deleteCar('${c.id}')" class="text-red-500 hover:text-red-700 px-2 py-1"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function updateStats() {
+            const now = new Date();
+            const currentMonth = now.getMonth();
+
+            const monthTrips = trips.filter(t => new Date(t.date).getMonth() === currentMonth);
+            const monthKm = monthTrips.reduce((sum, t) => sum + (t.km || 0), 0);
+
+            document.getElementById('statTotal').innerText = cars.length;
+            document.getElementById('statKm').innerText = Math.round(monthKm) + ' km';
+            document.getElementById('statTrips').innerText = monthTrips.length;
+            document.getElementById('statService').innerText = cars.filter(c => c.status === 'service').length;
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-car mr-2"></i>Ny Bil';
+            document.getElementById('carId').value = '';
+            document.getElementById('carReg').value = '';
+            document.getElementById('carModel').value = '';
+            document.getElementById('carYear').value = '';
+            document.getElementById('carKm').value = '';
+            document.getElementById('carDriver').value = '';
+            document.getElementById('carStatus').value = 'active';
+            document.getElementById('carModal').classList.add('active');
+        }
+
+        function editCar(id) {
+            const c = cars.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('modalTitle').innerHTML = '<i class="fas fa-edit mr-2"></i>Redigera Bil';
+            document.getElementById('carId').value = c.id;
+            document.getElementById('carReg').value = c.reg;
+            document.getElementById('carModel').value = c.model;
+            document.getElementById('carYear').value = c.year;
+            document.getElementById('carKm').value = c.km;
+            document.getElementById('carDriver').value = c.driver || '';
+            document.getElementById('carStatus').value = c.status;
+            document.getElementById('carModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('carModal').classList.remove('active');
+        }
+
+        function saveCar() {
+            const id = document.getElementById('carId').value;
+            const data = {
+                id: id || 'car_' + Date.now(),
+                reg: document.getElementById('carReg').value.trim().toUpperCase(),
+                model: document.getElementById('carModel').value.trim(),
+                year: document.getElementById('carYear').value,
+                km: parseInt(document.getElementById('carKm').value) || 0,
+                driver: document.getElementById('carDriver').value,
+                status: document.getElementById('carStatus').value,
+                createdAt: id ? cars.find(c => c.id === id)?.createdAt : new Date().toISOString()
+            };
+
+            if (!data.reg) { alert('Registreringsnummer krävs'); return; }
+
+            if (id) {
+                const idx = cars.findIndex(c => c.id === id);
+                if (idx >= 0) cars[idx] = data;
+            } else {
+                cars.push(data);
+            }
+
+            localStorage.setItem('constructPro_cars', JSON.stringify(cars));
+            closeModal();
+            renderCars();
+            updateStats();
+        }
+
+        function deleteCar(id) {
+            if (!confirm('Ta bort detta fordon?')) return;
+            cars = cars.filter(c => c.id !== id);
+            localStorage.setItem('constructPro_cars', JSON.stringify(cars));
+            renderCars();
+            updateStats();
+        }
+
+        function showDetail(id) {
+            const c = cars.find(x => x.id === id);
+            if (!c) return;
+
+            // Get trips from car.tripLog (new format) and global trips (old format)
+            const localTrips = c.tripLog || [];
+            const globalTrips = trips.filter(t => t.carId === id);
+            // Combine and deduplicate by start time
+            const allTrips = [...localTrips];
+            globalTrips.forEach(gt => {
+                if (!allTrips.find(t => t.start === gt.start)) allTrips.push(gt);
+            });
+            const carTrips = allTrips;
+
+            document.getElementById('detailTitle').innerHTML = `<i class="fas fa-car mr-2"></i>${c.reg} - Historik`;
+            document.getElementById('detailKm').innerText = c.km + ' km';
+            document.getElementById('detailTrips').innerText = carTrips.length;
+            document.getElementById('detailTotal').innerText = c.km + ' km';
+
+            const list = document.getElementById('tripList');
+            if (carTrips.length === 0) {
+                list.innerHTML = '<p class="text-slate-400 text-sm text-center py-4">Inga loggade resor för detta fordon</p>';
+            } else {
+                // Get employee names for driver lookup
+                const getDriverName = (driverId) => {
+                    if (!driverId) return '';
+                    const emp = employees.find(e => e.id === driverId);
+                    return emp ? emp.name : driverId;
+                };
+
+                list.innerHTML = carTrips.slice().reverse().slice(0, 50).map(t => `
+                    <div class="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-100">
+                        <div>
+                            <p class="font-bold text-slate-700">${new Date(t.date).toLocaleDateString('sv-SE')}</p>
+                            <p class="text-xs text-slate-500">
+                                ${new Date(t.start).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })} - 
+                                ${new Date(t.end).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            ${t.driver ? `<p class="text-xs text-blue-600"><i class="fas fa-user mr-1"></i>${getDriverName(t.driver)}</p>` : ''}
+                            ${t.desc ? `<p class="text-xs text-slate-400 italic">${t.desc}</p>` : ''}
+                        </div>
+                        <span class="font-bold text-orange-600 text-lg">${t.km} km</span>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('detailModal').classList.add('active');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        function printReport() {
+            window.print();
+        }
+
+        // Init
+        loadData();
+    </script>
+</body>
+
+</html>
