@@ -89,3 +89,30 @@ Current native languages supported:
 3. `ro` - Romanian
 
 Adding new locales requires updating the `translations` and `uiTranslations` maps within the Javascript contexts of HTML files, while ensuring the `data-i18n` bindings remain persistent across static tags.
+
+
+## Contractor Digital Navigator pilot
+
+The pilot marketplace flow lives at `firma-constructii-app/public/navigator.html`.
+
+Current MVP loop:
+1. customer submits a work request;
+2. the backend ranks active contractors by category, city, availability, rating and experience;
+3. the operator selects a contractor;
+4. the backend creates a draft offer with labour, materials and a configurable platform fee.
+
+### Pilot API endpoints
+
+- `GET /health`
+- `POST /api/requests`
+- `GET /api/requests`
+- `POST /api/contractors`
+- `GET /api/contractors`
+- `GET /api/requests/<id>/matches`
+- `POST /api/requests/<id>/offers`
+- `GET /api/requests/<id>/offers`
+- `POST /api/pilot/seed`
+
+Run the Flask API on port 5000 and the Express frontend on port 3000, then open:
+
+`http://localhost:3000/navigator.html`
