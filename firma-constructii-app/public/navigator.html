@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Contractor Digital Navigator — MVP Pilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+  <main class="max-w-6xl mx-auto p-4 md:p-8">
+    <header class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <p class="text-emerald-400 font-semibold tracking-wide uppercase text-xs">MVP Pilot</p>
+          <h1 class="text-3xl md:text-4xl font-bold mt-1">Contractor Digital Navigator</h1>
+          <p class="text-slate-400 mt-2">Förfrågan → matchning → offert → utförare.</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="seedBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700">Lägg in pilotföretag</button>
+          <span id="apiStatus" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400">API: kontrollerar…</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid lg:grid-cols-2 gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 class="text-xl font-semibold mb-4">1. Kundförfrågan</h2>
+        <form id="requestForm" class="space-y-4">
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-slate-400">Namn *</span>
+              <input name="customer_name" required class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" placeholder="Anna Andersson">
+            </label>
+            <label class="block">
+              <span class="text-sm text-slate-400">Stad *</span>
+              <input name="city" required class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" value="Jönköping">
+            </label>
+          </div>
+
+          <div class="grid sm:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-slate-400">Kategori *</span>
+              <select name="category" required class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2">
+                <option value="handyman">Handyman</option>
+                <option value="painting">Målning</option>
+                <option value="carpentry">Snickeri</option>
+                <option value="flooring">Golv</option>
+                <option value="kitchen">Kök</option>
+                <option value="bathroom">Badrum</option>
+                <option value="tiling">Kakel & klinker</option>
+              </select>
+            </label>
+
+            <label class="block">
+              <span class="text-sm text-slate-400">Brådska</span>
+              <select name="urgency" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2">
+                <option value="flexible">Flexibel</option>
+                <option value="within_2_weeks">Inom 2 veckor</option>
+                <option value="asap">Så snart som möjligt</option>
+              </select>
+            </label>
+          </div>
+
+          <label class="block">
+            <span class="text-sm text-slate-400">Beskrivning *</span>
+            <textarea name="description" required rows="5" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" placeholder="Ex: Måla om vardagsrum, ca 35 m² väggyta. Underlaget är normalt och möbler kan flyttas undan."></textarea>
+          </label>
+
+          <div class="grid sm:grid-cols-3 gap-4">
+            <label class="block">
+              <span class="text-sm text-slate-400">Budget SEK</span>
+              <input name="budget_sek" type="number" min="0" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" placeholder="15000">
+            </label>
+            <label class="block">
+              <span class="text-sm text-slate-400">E-post</span>
+              <input name="email" type="email" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" placeholder="anna@example.se">
+            </label>
+            <label class="block">
+              <span class="text-sm text-slate-400">Telefon</span>
+              <input name="phone" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2" placeholder="070…">
+            </label>
+          </div>
+
+          <button class="w-full rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold py-3">
+            Skapa förfrågan och hitta utförare
+          </button>
+        </form>
+      </div>
+
+      <div class="space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="text-xl font-semibold">2. Matchning</h2>
+            <span id="requestBadge" class="text-xs px-3 py-1 rounded-full bg-slate-800 text-slate-400">Ingen förfrågan ännu</span>
+          </div>
+          <div id="matches" class="space-y-3 text-slate-400">
+            Skapa en förfrågan för att se rankade företag.
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+          <h2 class="text-xl font-semibold mb-4">3. Skapa offert</h2>
+          <form id="offerForm" class="space-y-4">
+            <input type="hidden" id="requestId">
+            <input type="hidden" id="contractorId">
+
+            <div id="selectedContractor" class="text-sm text-slate-400">Välj en utförare från matchningen.</div>
+
+            <div class="grid sm:grid-cols-3 gap-4">
+              <label class="block">
+                <span class="text-sm text-slate-400">Arbetstid</span>
+                <input id="laborHours" type="number" min="0" step="0.5" value="16" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2">
+              </label>
+              <label class="block">
+                <span class="text-sm text-slate-400">Timpris</span>
+                <input id="hourlyRate" type="number" min="0" value="650" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2">
+              </label>
+              <label class="block">
+                <span class="text-sm text-slate-400">Material</span>
+                <input id="materialCost" type="number" min="0" value="2500" class="mt-1 w-full rounded-xl bg-slate-950 border border-slate-700 px-3 py-2">
+              </label>
+            </div>
+
+            <button id="offerBtn" disabled class="w-full rounded-xl bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 hover:bg-blue-400 text-white font-semibold py-3">
+              Skapa offert
+            </button>
+          </form>
+
+          <div id="offerResult" class="mt-4 hidden rounded-xl border border-emerald-800 bg-emerald-950/40 p-4"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-6 bg-slate-900 border border-slate-800 rounded-2xl p-5">
+      <h2 class="text-xl font-semibold mb-3">Pilotfall</h2>
+      <div class="grid md:grid-cols-5 gap-3 text-sm">
+        <button class="pilot text-left rounded-xl bg-slate-950 border border-slate-800 p-3 hover:border-slate-600" data-category="painting" data-city="Jönköping" data-description="Måla om vardagsrum och hall. Cirka 55 m² väggyta, normalt underlag.">1. Målning</button>
+        <button class="pilot text-left rounded-xl bg-slate-950 border border-slate-800 p-3 hover:border-slate-600" data-category="handyman" data-city="Jönköping" data-description="Montera 3 vägghyllor, 2 gardinstänger och en TV på vägg.">2. Handyman</button>
+        <button class="pilot text-left rounded-xl bg-slate-950 border border-slate-800 p-3 hover:border-slate-600" data-category="flooring" data-city="Gislaved" data-description="Lägga klickgolv i sovrum, cirka 18 m². Kunden har golvet.">3. Golv</button>
+        <button class="pilot text-left rounded-xl bg-slate-950 border border-slate-800 p-3 hover:border-slate-600" data-category="carpentry" data-city="Jönköping" data-description="Bygga enkel garderobsvägg med reglar och gipsskivor.">4. Snickeri</button>
+        <button class="pilot text-left rounded-xl bg-slate-950 border border-slate-800 p-3 hover:border-slate-600" data-category="tiling" data-city="Jönköping" data-description="Kakla stänkskydd i kök, cirka 4 m².">5. Kakel</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+  const API = localStorage.getItem("navigator_api") || "http://localhost:5000";
+  const form = document.getElementById("requestForm");
+  const matchesEl = document.getElementById("matches");
+  const requestBadge = document.getElementById("requestBadge");
+  const offerBtn = document.getElementById("offerBtn");
+
+  async function api(path, options = {}) {
+    const response = await fetch(API + path, {
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+      ...options,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || "API error");
+    return data;
+  }
+
+  async function checkApi() {
+    const status = document.getElementById("apiStatus");
+    try {
+      await api("/health");
+      status.textContent = "API: online";
+      status.className = "px-4 py-2 rounded-xl bg-emerald-950 text-emerald-400";
+    } catch (error) {
+      status.textContent = "API: offline";
+      status.className = "px-4 py-2 rounded-xl bg-rose-950 text-rose-400";
+    }
+  }
+
+  document.getElementById("seedBtn").addEventListener("click", async () => {
+    try {
+      const data = await api("/api/pilot/seed", { method: "POST", body: "{}" });
+      alert(data.created ? data.created + " pilotföretag skapades." : data.message);
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+    if (payload.budget_sek) payload.budget_sek = Number(payload.budget_sek);
+
+    matchesEl.innerHTML = '<div class="text-slate-400">Matchar…</div>';
+
+    try {
+      const created = await api("/api/requests", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+
+      const item = created.request;
+      document.getElementById("requestId").value = item.id;
+      requestBadge.textContent = "#" + item.id + " · " + item.category + " · " + item.city;
+
+      const result = await api("/api/requests/" + item.id + "/matches");
+      renderMatches(result.matches);
+    } catch (error) {
+      matchesEl.innerHTML = '<div class="text-rose-400">' + error.message + "</div>";
+    }
+  });
+
+  function renderMatches(matches) {
+    if (!matches.length) {
+      matchesEl.innerHTML = '<div class="rounded-xl bg-amber-950/30 border border-amber-900 p-3 text-amber-300">Inga matchningar ännu. Klicka på “Lägg in pilotföretag” och försök igen.</div>';
+      return;
+    }
+
+    matchesEl.innerHTML = matches.map((match, index) => {
+      const c = match.contractor;
+      return `
+        <button type="button"
+          class="match w-full text-left rounded-xl border border-slate-800 bg-slate-950 p-4 hover:border-emerald-600"
+          data-id="${c.id}"
+          data-name="${c.company_name.replaceAll('"', '&quot;')}"
+          data-rate="${c.hourly_rate_sek || 650}">
+          <div class="flex justify-between gap-3">
+            <div>
+              <div class="font-semibold text-slate-100">${index + 1}. ${c.company_name}</div>
+              <div class="text-sm text-slate-400 mt-1">${c.city} · ${match.reasons.join(" · ")}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <div class="text-2xl font-bold text-emerald-400">${match.score}</div>
+              <div class="text-xs text-slate-500">match score</div>
+            </div>
+          </div>
+        </button>
+      `;
+    }).join("");
+
+    document.querySelectorAll(".match").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".match").forEach((item) => item.classList.remove("border-emerald-500"));
+        button.classList.add("border-emerald-500");
+
+        document.getElementById("contractorId").value = button.dataset.id;
+        document.getElementById("hourlyRate").value = button.dataset.rate;
+        document.getElementById("selectedContractor").textContent = "Vald utförare: " + button.dataset.name;
+        offerBtn.disabled = false;
+      });
+    });
+  }
+
+  document.getElementById("offerForm").addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const requestId = document.getElementById("requestId").value;
+    const contractorId = document.getElementById("contractorId").value;
+    if (!requestId || !contractorId) return;
+
+    try {
+      const data = await api("/api/requests/" + requestId + "/offers", {
+        method: "POST",
+        body: JSON.stringify({
+          contractor_id: Number(contractorId),
+          labor_hours: Number(document.getElementById("laborHours").value || 0),
+          hourly_rate_sek: Number(document.getElementById("hourlyRate").value || 0),
+          material_cost_sek: Number(document.getElementById("materialCost").value || 0),
+          platform_fee_percent: 10,
+        }),
+      });
+
+      const offer = data.offer;
+      const result = document.getElementById("offerResult");
+      result.classList.remove("hidden");
+      result.innerHTML = `
+        <div class="text-sm text-emerald-300">Offert #${offer.id} skapad</div>
+        <div class="grid grid-cols-3 gap-3 mt-3">
+          <div><div class="text-slate-500 text-xs">Arbete + material</div><div class="font-semibold">${offer.subtotal_sek.toLocaleString("sv-SE")} kr</div></div>
+          <div><div class="text-slate-500 text-xs">Plattformsavgift</div><div class="font-semibold">${offer.platform_fee_sek.toLocaleString("sv-SE")} kr</div></div>
+          <div><div class="text-slate-500 text-xs">Kundpris</div><div class="font-bold text-emerald-400">${offer.total_sek.toLocaleString("sv-SE")} kr</div></div>
+        </div>
+      `;
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  document.querySelectorAll(".pilot").forEach((button) => {
+    button.addEventListener("click", () => {
+      form.elements.category.value = button.dataset.category;
+      form.elements.city.value = button.dataset.city;
+      form.elements.description.value = button.dataset.description;
+      form.elements.customer_name.focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+
+  checkApi();
+</script>
+</body>
+</html>
